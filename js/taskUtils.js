@@ -203,3 +203,18 @@ export function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+export function getCategoryMeta(category) {
+  const meta = {
+    Work:     { icon: "💼", color: "#1D4ED8", bg: "#EFF6FF", label: "Work" },
+    Studies:  { icon: "🎓", color: "#5B21B6", bg: "#F5F3FF", label: "Studies" },
+    Family:   { icon: "👨‍👩‍👧", color: "#86198F", bg: "#FDF2F8", label: "Family" },
+    Home:     { icon: "🏠", color: "#C2410C", bg: "#FFF7ED", label: "Home" },
+    Health:   { icon: "❤️",  color: "#15803D", bg: "#F0FDF4", label: "Health" },
+    Finance:  { icon: "💰", color: "#0F766E", bg: "#F0FDFA", label: "Finance" },
+    Personal: { icon: "👤", color: "#6D28D9", bg: "#F5F3FF", label: "Personal" },
+    Errands:  { icon: "🛒", color: "#B45309", bg: "#FFFBEB", label: "Errands" },
+    Other:    { icon: "📋", color: "#64748B", bg: "#F8FAFC", label: "Other" }
+  };
+  return meta[category] || { icon: "📋", color: "#64748B", bg: "#F8FAFC", label: category || "Other" };
+}

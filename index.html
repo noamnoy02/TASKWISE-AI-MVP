@@ -6,7 +6,7 @@
   <title>TaskWise</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -19,14 +19,23 @@
 
       <!-- WELCOME -->
       <section id="welcomeScreen" class="screen" data-screen="welcome">
-        <div class="fullscreen-center">
-          <div class="welcome-brand">
-            <div class="brand-icon-lg">✦</div>
-            <h1 class="brand-title">TASKWISE</h1>
+        <div class="fullscreen-center welcome-v2">
+          <div class="tw-logo-wrap">
+            <div class="tw-logo-icon">
+              <span class="tw-logo-text">Tw</span>
+            </div>
+            <span class="tw-app-name">TaskWise</span>
           </div>
           <div class="welcome-hero">
-            <h2 class="welcome-slogan">Turn scattered responsibilities into clear next steps.</h2>
-            <p class="welcome-support">Stay in control of work, studies, family, and everyday life.</p>
+            <h2 class="welcome-slogan">Turn chaos into<br>clear action.</h2>
+            <p class="welcome-support">Capture messages, emails, reminders and everyday responsibilities. TaskWise transforms them into organized next steps.</p>
+          </div>
+          <div class="source-pills-row">
+            <span class="source-pill-item">💬 WhatsApp</span>
+            <span class="source-pill-item">✉️ Gmail</span>
+            <span class="source-pill-item">📧 Outlook</span>
+            <span class="source-pill-item">📅 Calendar</span>
+            <span class="source-pill-item">📝 Notes</span>
           </div>
           <div class="welcome-actions">
             <button id="getStartedBtn" class="primary-btn welcome-btn" type="button">Get Started</button>
@@ -39,7 +48,9 @@
       <section id="userentryScreen" class="screen" data-screen="userentry">
         <div class="fullscreen-center">
           <div class="userentry-brand">
-            <span class="brand-icon-sm">✦</span>
+            <div class="tw-logo-icon tw-logo-sm">
+              <span class="tw-logo-text">Tw</span>
+            </div>
             <span class="brand-label">TASKWISE</span>
           </div>
           <h2 id="userentryHeading" class="userentry-heading">Let's get started</h2>
@@ -70,7 +81,7 @@
 
           <!-- Intro (not counted in progress) -->
           <div class="onboarding-step" id="ob-intro">
-            <div class="step-emoji">✦</div>
+            <div class="step-emoji tw-step-mark">Tw</div>
             <h2 class="step-title">Let's personalize TaskWise</h2>
             <p class="step-body">A few quick questions help TaskWise understand your responsibilities and classify tasks more accurately.</p>
             <div class="step-actions">
@@ -78,18 +89,51 @@
             </div>
           </div>
 
+          <!-- Step 0.5: Role selection -->
+          <div class="onboarding-step hidden" id="ob-role">
+            <h2 class="step-title">What best describes you?</h2>
+            <p class="muted ob-role-step-body">This helps us tailor your experience from the start.</p>
+            <div class="role-cards" id="roleCards">
+              <button class="role-card" type="button" data-value="Student">
+                <span class="role-card-icon">🎓</span>
+                <span>Student</span>
+              </button>
+              <button class="role-card" type="button" data-value="Professional">
+                <span class="role-card-icon">💼</span>
+                <span>Professional</span>
+              </button>
+              <button class="role-card" type="button" data-value="Parent">
+                <span class="role-card-icon">👨‍👩‍👧</span>
+                <span>Parent</span>
+              </button>
+              <button class="role-card" type="button" data-value="Household">
+                <span class="role-card-icon">🏠</span>
+                <span>Managing a household</span>
+              </button>
+              <button class="role-card role-card-full" type="button" data-value="Other">
+                <span class="role-card-icon">➕</span>
+                <span>Other</span>
+              </button>
+            </div>
+            <p id="roleError" class="field-error hidden">Please select an option to continue.</p>
+            <div class="step-actions">
+              <button id="obRoleBtn" class="primary-btn" type="button">Continue</button>
+              <button class="ghost-btn ob-back" type="button">← Back</button>
+            </div>
+          </div>
+
           <!-- Step 1: Life areas -->
           <div class="onboarding-step hidden" id="ob-areas">
-            <h2 class="step-title">Which areas would you like help managing?</h2>
+            <h2 class="step-title">Select your focus areas</h2>
             <p class="muted">Select all that apply.</p>
             <div class="chip-grid" id="lifeAreasChips" data-multi="true">
-              <button class="chip" type="button" data-value="Work">Work</button>
-              <button class="chip" type="button" data-value="Studies">Studies</button>
-              <button class="chip" type="button" data-value="Family">Family</button>
-              <button class="chip" type="button" data-value="Home">Home</button>
-              <button class="chip" type="button" data-value="Personal">Personal</button>
-              <button class="chip" type="button" data-value="Health">Health</button>
-              <button class="chip" type="button" data-value="Finances">Finances</button>
+              <button class="chip area-chip" type="button" data-value="Work">💼 Work</button>
+              <button class="chip area-chip" type="button" data-value="Studies">🎓 Studies</button>
+              <button class="chip area-chip" type="button" data-value="Family">👨‍👩‍👧 Family</button>
+              <button class="chip area-chip" type="button" data-value="Home">🏠 Home</button>
+              <button class="chip area-chip" type="button" data-value="Personal">👤 Personal</button>
+              <button class="chip area-chip" type="button" data-value="Health">❤️ Health</button>
+              <button class="chip area-chip" type="button" data-value="Finances">💰 Finances</button>
             </div>
             <p id="lifeAreasError" class="field-error hidden">Please select at least one area.</p>
             <div class="step-actions">
@@ -104,7 +148,7 @@
             <p class="muted">Help the AI recognize tasks from the areas you selected.</p>
 
             <!-- Work section -->
-            <div id="ctx-work" class="context-section hidden">
+            <div id="ctx-work" class="context-section accordion-card hidden">
               <h3 class="section-heading">Work</h3>
               <p class="section-support">Help us recognize work-related tasks.</p>
 
@@ -239,7 +283,7 @@
             </div>
 
             <!-- Studies section -->
-            <div id="ctx-studies" class="context-section hidden">
+            <div id="ctx-studies" class="context-section accordion-card hidden">
               <h3 class="section-heading">Studies</h3>
               <p class="section-support">Help us recognize study-related tasks.</p>
 
@@ -374,7 +418,7 @@
             </div>
 
             <!-- Family section -->
-            <div id="ctx-family" class="context-section hidden">
+            <div id="ctx-family" class="context-section accordion-card hidden">
               <h3 class="section-heading">Family</h3>
               <p class="section-support">Help us recognize family-related tasks.</p>
               <p class="chip-label-text">Family responsibilities <span class="optional">(optional)</span></p>
@@ -402,7 +446,7 @@
             </div>
 
             <!-- Home section -->
-            <div id="ctx-home" class="context-section hidden">
+            <div id="ctx-home" class="context-section accordion-card hidden">
               <h3 class="section-heading">Home</h3>
               <p class="chip-label-text">Common home responsibilities <span class="optional">(optional)</span></p>
               <div class="chip-grid" id="homeRespChips" data-multi="true">
@@ -427,7 +471,7 @@
             </div>
 
             <!-- Personal section -->
-            <div id="ctx-personal" class="context-section hidden">
+            <div id="ctx-personal" class="context-section accordion-card hidden">
               <h3 class="section-heading">Personal</h3>
               <p class="chip-label-text">Common personal responsibilities <span class="optional">(optional)</span></p>
               <div class="chip-grid" id="personalRespChips" data-multi="true">
@@ -451,7 +495,7 @@
             </div>
 
             <!-- Health section -->
-            <div id="ctx-health" class="context-section hidden">
+            <div id="ctx-health" class="context-section accordion-card hidden">
               <h3 class="section-heading">Health</h3>
               <p class="chip-label-text">Common health-related tasks <span class="optional">(optional)</span></p>
               <div class="chip-grid" id="healthRespChips" data-multi="true">
@@ -474,7 +518,7 @@
             </div>
 
             <!-- Finances section -->
-            <div id="ctx-finances" class="context-section hidden">
+            <div id="ctx-finances" class="context-section accordion-card hidden">
               <h3 class="section-heading">Finances</h3>
               <p class="chip-label-text">Common finance-related tasks <span class="optional">(optional)</span></p>
               <div class="chip-grid" id="financeRespChips" data-multi="true">
@@ -578,12 +622,12 @@
 
           <!-- Step 4: Completion -->
           <div class="onboarding-step hidden" id="ob-done">
-            <div class="step-emoji completion-emoji">✦</div>
-            <h2 class="step-title">You're all set</h2>
-            <p class="step-body">Paste a message, email, or reminder and we'll turn it into a clear task.</p>
+            <div class="step-emoji tw-step-mark completion-mark">Tw</div>
+            <h2 class="step-title">You're all set!</h2>
+            <p class="step-body">TaskWise is ready to help you turn messages, reminders, and everyday responsibilities into clear next steps.</p>
             <p class="muted">You can always review and edit the result before saving.</p>
             <div class="step-actions">
-              <button id="obDoneBtn" class="primary-btn welcome-btn" type="button">Start using the app</button>
+              <button id="obDoneBtn" class="primary-btn welcome-btn" type="button">Start using TaskWise</button>
             </div>
           </div>
 
@@ -602,16 +646,16 @@
           <p class="muted greeting-sub">Here's what needs your attention today.</p>
         </div>
 
-        <!-- Smart Capture -->
+        <!-- Smart Capture hero -->
         <section class="panel highlight-panel home-capture-panel">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Smart Capture</p>
               <h3 class="panel-h3">Turn any message into a clear task</h3>
-              <p class="muted capture-intro">Copy a task, request, email, meeting invitation, or reminder from any app and paste it here. TaskWise will identify the action, deadline, category, and missing details.</p>
+              <p class="muted capture-intro">Paste a WhatsApp message, email, meeting invite, reminder or note. TaskWise will identify the action, category, deadline, and missing information.</p>
             </div>
           </div>
-          <div class="source-chips">
+          <div class="source-chips" id="homeSourceChips">
             <span class="source-chip">💬 WhatsApp</span>
             <span class="source-chip">✉️ Gmail</span>
             <span class="source-chip">📧 Outlook</span>
@@ -620,10 +664,10 @@
             <span class="source-chip">+ Other</span>
           </div>
           <textarea id="homeQuickCapture" rows="3"
-            placeholder="Paste a message, email, invitation, or reminder here…"></textarea>
-          <p class="capture-example">Example: "Send the final report to Harel for survey X by Thursday."</p>
+            placeholder="Paste a message, email, invite or reminder here…"></textarea>
+          <p class="capture-example">Example: "Send the final report to Harel for Survey X by Thursday."</p>
           <div class="capture-actions">
-            <button id="homeCreateTaskBtn" class="primary-btn" type="button">Create Task with AI</button>
+            <button id="homeCreateTaskBtn" class="primary-btn" type="button">✨ Create Task with AI</button>
             <button id="homeAddManualBtn" class="secondary-btn" type="button">Add task manually</button>
           </div>
         </section>
@@ -910,11 +954,11 @@
     <!-- Bottom navigation -->
     <nav class="bottom-nav" id="bottomNav">
       <button type="button" data-nav-target="home" title="Home">
-        <span class="nav-icon">⌂</span>
+        <span class="nav-icon">🏠</span>
         <span class="nav-label">Home</span>
       </button>
-      <button type="button" data-nav-target="capture" title="Capture">
-        <span class="nav-icon">✦</span>
+      <button type="button" data-nav-target="capture" class="nav-main" title="Capture">
+        <span class="nav-icon">✨</span>
         <span class="nav-label">Capture</span>
       </button>
       <button type="button" data-nav-target="shared" title="Shared">
@@ -922,7 +966,7 @@
         <span class="nav-label">Shared</span>
       </button>
       <button type="button" data-nav-target="profile" title="Profile">
-        <span class="nav-icon">◉</span>
+        <span class="nav-icon">👤</span>
         <span class="nav-label">Profile</span>
       </button>
     </nav>

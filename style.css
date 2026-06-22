@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
   --bg: #eef3ff;
@@ -41,7 +41,7 @@ html {
 
 body {
   margin: 0;
-  font-family: "Manrope", Arial, sans-serif;
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
   background:
     radial-gradient(circle at top left, rgba(193, 204, 255, 0.85), transparent 28%),
     radial-gradient(circle at top right, rgba(221, 241, 255, 0.9), transparent 26%),
@@ -1561,7 +1561,7 @@ button.source-chip.selected {
   color: #4a5168;
   line-height: 1.65;
   white-space: pre-wrap;
-  font-family: "Manrope", monospace;
+  font-family: "Plus Jakarta Sans", monospace;
 }
 
 .profile-actions {
@@ -1636,5 +1636,321 @@ body[data-active-screen="overview"] .quick-stats {
 
   .welcome-slogan {
     font-size: 1.3rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   BRAND REFRESH 2026 — TaskWise
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Typography: Plus Jakarta Sans throughout ── */
+body {
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+}
+
+.ai-context-preview {
+  font-family: "Plus Jakarta Sans", monospace;
+}
+
+/* ── TW Logo component ── */
+.tw-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.tw-logo-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, var(--primary) 0%, #9b8bff 100%);
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 18px 40px rgba(109, 93, 252, 0.32);
+  flex-shrink: 0;
+}
+
+.tw-logo-text {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.04em;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.tw-logo-icon.tw-logo-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.tw-logo-icon.tw-logo-sm .tw-logo-text {
+  font-size: 0.78rem;
+}
+
+.tw-app-name {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 7vw, 2.2rem);
+  letter-spacing: -0.055em;
+  color: var(--text);
+}
+
+/* ── Tw monogram used in onboarding step-emoji slots ── */
+.step-emoji.tw-step-mark {
+  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  color: #ffffff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: -0.04em;
+}
+
+.step-emoji.completion-mark {
+  box-shadow: 0 12px 28px rgba(109, 93, 252, 0.35);
+}
+
+/* ── Welcome v2 screen ── */
+.welcome-v2 {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(109, 93, 252, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #f0f0ff 0%, #f8fafc 40%);
+  gap: 30px;
+}
+
+.welcome-v2 .welcome-hero {
+  max-width: 400px;
+}
+
+.welcome-v2 .welcome-slogan {
+  font-size: clamp(1.85rem, 7.5vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.055em;
+  margin: 0 0 14px;
+}
+
+.welcome-v2 .welcome-support {
+  font-size: 0.96rem;
+  line-height: 1.62;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── Source pills row (welcome screen) ── */
+.source-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 360px;
+}
+
+.source-pill-item {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ── Role selection cards (onboarding step) ── */
+.role-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 22px 14px;
+  border: 2px solid var(--border);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: center;
+  box-shadow: var(--soft-shadow);
+  min-height: 100px;
+}
+
+.role-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(109, 93, 252, 0.18);
+}
+
+.role-card.selected {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary-soft), #ddd6fe);
+  color: var(--primary-dark);
+  box-shadow: 0 6px 20px rgba(109, 93, 252, 0.22);
+}
+
+.role-card-icon {
+  font-size: 1.85rem;
+  line-height: 1;
+}
+
+.role-card-full {
+  grid-column: 1 / -1;
+  min-height: 72px;
+  flex-direction: row;
+  gap: 12px;
+}
+
+/* ── Life area chips (with emoji) ── */
+.area-chip {
+  padding: 11px 16px;
+  font-size: 0.92rem;
+  gap: 6px;
+}
+
+/* ── Context accordion (step 2) ── */
+.context-section.accordion-card {
+  margin-top: 10px;
+  padding-top: 0;
+  border-top: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--soft-shadow);
+}
+
+.accordion-card .section-heading.accordion-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 14px 16px;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  user-select: none;
+  font-size: 0.96rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.accordion-card .section-heading.accordion-trigger:hover {
+  background: var(--primary-soft);
+  border-color: rgba(109, 93, 252, 0.28);
+}
+
+.accordion-card.accordion-open .section-heading.accordion-trigger {
+  background: var(--primary-soft);
+  border-color: rgba(109, 93, 252, 0.35);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-bottom-color: transparent;
+}
+
+.accordion-chevron {
+  font-style: normal;
+  color: var(--muted);
+  transition: transform 0.22s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+  font-size: 0.85rem;
+}
+
+.accordion-card.accordion-open .accordion-chevron {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.accordion-card .accordion-body {
+  display: none;
+  padding: 16px;
+  background: rgba(249, 250, 252, 0.85);
+  border: 1.5px solid rgba(109, 93, 252, 0.25);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.accordion-card.accordion-open .accordion-body {
+  display: block;
+}
+
+/* ── Bottom nav: purple capture button ── */
+.bottom-nav {
+  height: 76px;
+}
+
+.bottom-nav .nav-main {
+  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  color: #ffffff;
+  width: auto;
+  height: auto;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: inherit;
+  box-shadow: 0 8px 22px rgba(109, 93, 252, 0.38);
+  transform: translateY(-10px);
+}
+
+.bottom-nav .nav-main .nav-label {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.bottom-nav .nav-main.active {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: #ffffff;
+}
+
+/* ── Empty state: subtle Tw mark ── */
+.empty-state {
+  text-align: center;
+  padding: 24px 18px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ── Capture section: slightly taller textarea ── */
+#homeQuickCapture {
+  min-height: 86px;
+}
+
+/* ── Section headings: remove Manrope override ── */
+.section-heading {
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+/* ── Category color meta chips ── */
+.meta-chip[data-cat="Work"]     { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+.meta-chip[data-cat="Studies"]  { background: #F5F3FF; color: #5B21B6; border-color: #DDD6FE; }
+.meta-chip[data-cat="Family"]   { background: #FDF2F8; color: #86198F; border-color: #F5D0FE; }
+.meta-chip[data-cat="Home"]     { background: #FFF7ED; color: #C2410C; border-color: #FED7AA; }
+.meta-chip[data-cat="Health"]   { background: #F0FDF4; color: #15803D; border-color: #BBF7D0; }
+.meta-chip[data-cat="Finance"]  { background: #F0FDFA; color: #0F766E; border-color: #99F6E4; }
+.meta-chip[data-cat="Personal"] { background: #F5F3FF; color: #6D28D9; border-color: #DDD6FE; }
+.meta-chip[data-cat="Errands"]  { background: #FFFBEB; color: #B45309; border-color: #FDE68A; }
+
+/* ── Onboarding progress: 5 steps now ── */
+.progress-label {
+  font-weight: 600;
+  font-size: 0.76rem;
+}
+
+/* ── Responsive tweaks for role cards ── */
+@media (max-width: 360px) {
+  .role-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .role-card-full {
+    grid-column: auto;
   }
 }

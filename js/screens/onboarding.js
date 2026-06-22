@@ -9,14 +9,15 @@ function notifyProfileChange() { profileChangeListeners.forEach(fn => fn()); }
 // ── Step identifiers ──────────────────────────────────────────────────
 const STEP_IDS = {
   intro:   "ob-intro",
+  role:    "ob-role",
   areas:   "ob-areas",
   context: "ob-context",
   tasks:   "ob-tasks",
   done:    "ob-done"
 };
-const STEP_ORDER = ["intro", "areas", "context", "tasks", "done"];
-// Progress counts only content steps (1–4)
-const PROGRESS_STEPS = ["areas", "context", "tasks", "done"];
+const STEP_ORDER = ["intro", "role", "areas", "context", "tasks", "done"];
+// Progress counts content steps (role through done)
+const PROGRESS_STEPS = ["role", "areas", "context", "tasks", "done"];
 const AREA_TO_SECTION = {
   Work:     "ctx-work",
   Studies:  "ctx-studies",
@@ -32,6 +33,7 @@ let currentStep = "intro";
 let onComplete = null;
 
 const data = {
+  userRole: null,
   lifeAreas: [],
   workContext: emptyWorkCtx(),
   studyContext: emptyStudyCtx(),
@@ -171,12 +173,58 @@ function restoreChipGroup(containerId, selectedValues) {
   });
 }
 
+// ── Accordion: open one section, close others ────────────────────────
+
+function openAccordionSection(section) {
+  if (!section) return;
+  document.querySelectorAll("#ob-context .context-section").forEach(s => s.classList.remove("accordion-open"));
+  section.classList.add("accordion-open");
+}
+
 // ── Context sections: show/hide based on life areas ───────────────────
 
 function showContextSections() {
   Object.values(AREA_TO_SECTION).forEach(id => hide(id));
+  let firstSection = null;
   data.lifeAreas.forEach(area => {
-    if (AREA_TO_SECTION[area]) show(AREA_TO_SECTION[area]);
+    const sectionId = AREA_TO_SECTION[area];
+    if (sectionId) {
+      show(sectionId);
+      if (!firstSection) firstSection = el(sectionId);
+    }
+  });
+  // Auto-open the first visible accordion section
+  document.querySelectorAll("#ob-context .context-section").forEach(s => s.classList.remove("accordion-open"));
+  if (firstSection) firstSection.classList.add("accordion-open");
+}
+
+// ── Accordion init (runs once at startup) ────────────────────────────
+
+function initContextAccordions() {
+  document.querySelectorAll("#ob-context .context-section").forEach(section => {
+    const heading = section.querySelector(".section-heading");
+    if (!heading) return;
+
+    // Wrap everything after the heading in an accordion-body div
+    const body = document.createElement("div");
+    body.className = "accordion-body";
+    Array.from(section.childNodes)
+      .filter(n => n !== heading)
+      .forEach(n => body.appendChild(n));
+    section.appendChild(body);
+
+    // Make heading act as accordion trigger
+    heading.classList.add("accordion-trigger");
+    const chevron = document.createElement("span");
+    chevron.className = "accordion-chevron";
+    chevron.setAttribute("aria-hidden", "true");
+    chevron.textContent = "▾";
+    heading.appendChild(chevron);
+
+    heading.addEventListener("click", () => {
+      const isOpen = section.classList.contains("accordion-open");
+      openAccordionSection(isOpen ? null : section);
+    });
   });
 }
 
@@ -314,6 +362,7 @@ function validateContextOther() {
       const custom = el(customId);
       if (!custom?.value.trim()) {
         err?.classList.remove("hidden");
+        openAccordionSection(custom?.closest(".context-section"));
         custom?.focus();
         return false;
       }
@@ -330,6 +379,7 @@ function validateContextOther() {
       const custom = el(customId);
       if (!custom?.value.trim()) {
         err?.classList.remove("hidden");
+        openAccordionSection(custom?.closest(".context-section"));
         custom?.focus();
         return false;
       }
@@ -350,6 +400,7 @@ function validateContextOther() {
       const custom = el(inputId);
       if (!custom?.value.trim()) {
         err?.classList.remove("hidden");
+        openAccordionSection(custom?.closest(".context-section"));
         custom?.focus();
         return false;
       }
@@ -364,6 +415,18 @@ function validateContextOther() {
 
 function advance() {
   if (currentStep === "intro") {
+    goToStep("role");
+    return;
+  }
+
+  if (currentStep === "role") {
+    const selected = el("roleCards")?.querySelector(".role-card.selected");
+    if (!selected) {
+      el("roleError")?.classList.remove("hidden");
+      return;
+    }
+    el("roleError")?.classList.add("hidden");
+    data.userRole = selected.dataset.value;
     goToStep("areas");
     return;
   }
@@ -409,6 +472,7 @@ function finishOnboarding() {
     username: user?.identifier || "",
     email: user?.isEmail ? user.identifier : "",
     displayName: user?.displayName || user?.identifier || "",
+    userRole: data.userRole || null,
     lifeAreas: [...data.lifeAreas],
     workContext: { ...data.workContext },
     studyContext: { ...data.studyContext },
@@ -432,6 +496,7 @@ function finishOnboarding() {
 // Reads old schema fields and maps them into the new data object.
 
 function migrateOldProfile(p) {
+  data.userRole = p.userRole || null;
   data.lifeAreas = p.lifeAreas || [];
 
   // Work
@@ -504,6 +569,13 @@ function populateFromProfile() {
   if (!p) return;
 
   migrateOldProfile(p);
+
+  // Role
+  if (data.userRole) {
+    document.querySelectorAll("#ob-role .role-card").forEach(card => {
+      card.classList.toggle("selected", card.dataset.value === data.userRole);
+    });
+  }
 
   // Life areas
   restoreChipGroup("lifeAreasChips", data.lifeAreas);
@@ -650,8 +722,21 @@ export function initOnboardingScreen(options = {}) {
   wireOtherSelect("ctxStudyInstType", "ctxStudyInstTypeCustomWrap", "ctxStudyInstTypeCustom");
   wireOtherSelect("ctxStudyDegree", "ctxStudyDegreeCustomWrap", "ctxStudyDegreeCustom");
 
+  // Accordion for context sections
+  initContextAccordions();
+
+  // Role card single-select
+  document.querySelectorAll("#ob-role .role-card").forEach(card => {
+    card.addEventListener("click", () => {
+      document.querySelectorAll("#ob-role .role-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+      el("roleError")?.classList.add("hidden");
+    });
+  });
+
   // Navigation buttons
-  el("obIntroBtn")?.addEventListener("click", () => goToStep("areas"));
+  el("obIntroBtn")?.addEventListener("click", advance);
+  el("obRoleBtn")?.addEventListener("click", advance);
   el("obAreasBtn")?.addEventListener("click", advance);
   el("obContextBtn")?.addEventListener("click", advance);
   el("obContextSkipBtn")?.addEventListener("click", () => {
