@@ -191,10 +191,8 @@ exports.handler = async function handler(event) {
       },
       body: JSON.stringify({
         model: MODEL,
-        input: [
-          { role: "developer", content: SYSTEM_PROMPT },
-          { role: "user", content: userMessage }
-        ],
+        instructions: SYSTEM_PROMPT,
+        input: userMessage,
         text: {
           format: {
             type: "json_schema",
@@ -254,6 +252,7 @@ exports.handler = async function handler(event) {
 
   if (!openaiResponse.ok) {
     const status = openaiResponse.status;
+    console.error("OpenAI error", status, JSON.stringify(data?.error || data));
     if (status === 429) {
       return jsonResponse(503, {
         error: "AI task creation is temporarily unavailable. You can still add the task manually."
