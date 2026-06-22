@@ -1,16 +1,44 @@
 export const STORAGE_KEYS = {
+  user: "taskwise_user",
   profile: "taskwise_profile",
-  onboardingSkipped: "taskwise_onboarding_skipped",
-  tasks: "taskwise_tasks"
+  tasks: "taskwise_tasks",
+  corrections: "taskwise_corrections"
 };
 
 export function safeJsonParse(value, fallback) {
   try {
     return value ? JSON.parse(value) : fallback;
-  } catch (error) {
+  } catch {
     return fallback;
   }
 }
+
+// ── User (email / username entry) ──────────────────────────────
+
+export function getUser() {
+  return safeJsonParse(localStorage.getItem(STORAGE_KEYS.user), null);
+}
+
+export function saveUser(user) {
+  localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
+}
+
+export function clearUser() {
+  localStorage.removeItem(STORAGE_KEYS.user);
+}
+
+// ── Profile (onboarding data) ───────────────────────────────────
+// New schema:
+// {
+//   id, username, email, displayName,
+//   lifeAreas[], currentSituation,
+//   workContext: { industry, role, commonProjects, knownPeople },
+//   studyContext: { studyType, field, institution, commonProjects },
+//   familyContext: { responsibilities[] },
+//   commonTaskTypes[],
+//   onboardingCompleted: true,
+//   updatedAt
+// }
 
 export function getProfile() {
   return safeJsonParse(localStorage.getItem(STORAGE_KEYS.profile), null);
@@ -18,21 +46,18 @@ export function getProfile() {
 
 export function saveProfile(profile) {
   localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(profile));
-  localStorage.removeItem(STORAGE_KEYS.onboardingSkipped);
 }
 
 export function clearProfile() {
   localStorage.removeItem(STORAGE_KEYS.profile);
-  localStorage.removeItem(STORAGE_KEYS.onboardingSkipped);
 }
 
-export function isOnboardingSkipped() {
-  return localStorage.getItem(STORAGE_KEYS.onboardingSkipped) === "true";
+export function isOnboardingCompleted() {
+  const profile = getProfile();
+  return Boolean(profile && profile.onboardingCompleted);
 }
 
-export function setOnboardingSkipped() {
-  localStorage.setItem(STORAGE_KEYS.onboardingSkipped, "true");
-}
+// ── Tasks ───────────────────────────────────────────────────────
 
 export function getTasks() {
   return safeJsonParse(localStorage.getItem(STORAGE_KEYS.tasks), []);
@@ -55,4 +80,26 @@ export function getRecentTaskContext() {
       owner: task.owner,
       priority: task.priority
     }));
+}
+
+// ── AI classification corrections (lightweight learning) ────────
+
+export function getCorrections() {
+  return safeJsonParse(localStorage.getItem(STORAGE_KEYS.corrections), []);
+}
+
+export function addCorrection(correction) {
+  const all = getCorrections();
+  all.push({ ...correction, createdAt: new Date().toISOString() });
+  localStorage.setItem(STORAGE_KEYS.corrections, JSON.stringify(all.slice(-10)));
+}
+
+export function clearCorrections() {
+  localStorage.removeItem(STORAGE_KEYS.corrections);
+}
+
+// ── Full reset ──────────────────────────────────────────────────
+
+export function resetAll() {
+  Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
 }

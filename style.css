@@ -919,3 +919,661 @@ summary {
     width: calc(100% - 20px);
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   NEW SCREENS & COMPONENTS  (added for full redesign)
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Pre-nav screen visibility ── */
+body[data-active-screen="welcome"] .bottom-nav,
+body[data-active-screen="userentry"] .bottom-nav,
+body[data-active-screen="onboarding"] .bottom-nav {
+  display: none;
+}
+
+body[data-active-screen="welcome"] .app-shell,
+body[data-active-screen="userentry"] .app-shell,
+body[data-active-screen="onboarding"] .app-shell {
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* ── Home & nav screens: flex column layout ── */
+#homeScreen.is-active,
+#captureScreen.is-active,
+#sharedScreen.is-active,
+#profileScreen.is-active {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Full-screen centred layout (welcome / userentry) ── */
+.fullscreen-center {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px 56px;
+  text-align: center;
+  gap: 28px;
+}
+
+/* ── Welcome screen ── */
+.welcome-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon-lg {
+  width: 62px;
+  height: 62px;
+  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 1.55rem;
+  box-shadow: 0 14px 32px rgba(109, 93, 252, 0.32);
+}
+
+.brand-title {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(1.9rem, 9vw, 3rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--text);
+}
+
+.welcome-hero {
+  max-width: 380px;
+}
+
+.welcome-slogan {
+  margin: 0 0 12px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(1.35rem, 5.5vw, 1.9rem);
+  line-height: 1.18;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.welcome-support {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.welcome-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 310px;
+}
+
+.welcome-btn {
+  width: 100%;
+  padding: 15px 20px;
+  font-size: 1rem;
+  justify-content: center;
+}
+
+/* ── User entry screen ── */
+.userentry-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.brand-icon-sm {
+  width: 26px;
+  height: 26px;
+  background: var(--primary);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 0.72rem;
+}
+
+.brand-label {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+}
+
+.userentry-heading {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(1.6rem, 7vw, 2rem);
+  letter-spacing: -0.045em;
+}
+
+.userentry-form {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.back-link {
+  margin-top: 4px;
+  font-size: 0.88rem;
+}
+
+/* ── Multi-step onboarding ── */
+.onboarding-container {
+  min-height: 100vh;
+  padding: 28px 22px 48px;
+  display: flex;
+  flex-direction: column;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.onboarding-progress-bar {
+  margin-bottom: 30px;
+}
+
+.progress-track {
+  height: 6px;
+  background: rgba(109, 93, 252, 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+
+.progress-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.onboarding-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: screen-in 0.2s ease;
+}
+
+.step-emoji {
+  width: 52px;
+  height: 52px;
+  background: var(--primary-soft);
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  color: var(--primary);
+}
+
+.completion-emoji {
+  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  color: #fff;
+}
+
+.step-title {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(1.4rem, 5vw, 1.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+.step-body {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.62;
+  font-size: 0.96rem;
+}
+
+.step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* ── Selection chips ── */
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.chip {
+  border: 1.5px solid var(--border);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.chip.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(109, 93, 252, 0.25);
+}
+
+.chip-wide {
+  flex: 0 0 100%;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.mt-sm {
+  margin-top: 4px;
+}
+
+/* ── Home screen ── */
+.home-greeting {
+  padding: 6px 2px 4px;
+}
+
+.greeting-title {
+  margin: 0 0 4px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(1.4rem, 6vw, 1.7rem);
+  letter-spacing: -0.055em;
+}
+
+.greeting-sub {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.panel-h3 {
+  margin: 5px 0 5px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.12rem;
+  letter-spacing: -0.04em;
+}
+
+.capture-intro {
+  font-size: 0.86rem;
+  margin-top: 3px;
+  max-width: 540px;
+}
+
+/* ── Source chips ── */
+.source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 2px 0 12px;
+}
+
+.source-chip {
+  background: rgba(109, 93, 252, 0.07);
+  color: var(--primary-dark);
+  border: 1px solid rgba(109, 93, 252, 0.18);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  user-select: none;
+  cursor: default;
+}
+
+button.source-chip {
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button.source-chip:hover {
+  background: rgba(109, 93, 252, 0.14);
+  border-color: rgba(109, 93, 252, 0.35);
+}
+
+button.source-chip.selected {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.capture-example {
+  margin: 8px 0 2px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ── Today stats row ── */
+.today-section {
+  margin: 0;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stat-btn {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: var(--radius-md);
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--soft-shadow);
+}
+
+.stat-btn strong {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.45rem;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.stat-btn span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.stat-btn:hover,
+.stat-btn.active-filter {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.stat-btn:hover strong,
+.stat-btn.active-filter strong {
+  color: var(--primary-dark);
+}
+
+.overdue-stat {
+  background: #fff5f5;
+  border-color: #ffd5d5;
+}
+
+.overdue-stat strong { color: var(--danger); }
+
+.done-stat {
+  background: #edfdf4;
+  border-color: #bbf7d0;
+}
+
+.done-stat strong { color: var(--success); }
+
+.filter-bar {
+  margin-top: 8px;
+  padding: 8px 13px;
+  background: var(--primary-soft);
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.small-btn-inline {
+  padding: 4px 10px !important;
+  font-size: 0.75rem !important;
+  border-radius: 999px;
+}
+
+/* ── Recommended / top-priority task highlight ── */
+.task-card.top-priority {
+  border-color: rgba(109, 93, 252, 0.28);
+  background: linear-gradient(180deg, #fff, rgba(237, 234, 255, 0.45));
+}
+
+.task-card.top-priority::before {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.recommended-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.task-card.is-done {
+  opacity: 0.6;
+}
+
+.task-card.is-done h3 {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* ── Shared screen inline controls ── */
+.inline-select {
+  border: 1px solid var(--border);
+  background: #f9faff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #626b7c;
+  outline: none;
+  cursor: pointer;
+}
+
+.inline-select:focus {
+  border-color: var(--primary);
+}
+
+/* ── Profile screen ── */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: var(--primary-soft);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  width: 54px;
+  height: 54px;
+  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.profile-name {
+  margin: 0 0 3px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: -0.04em;
+}
+
+.profile-section {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-section:last-of-type {
+  border-bottom: none;
+}
+
+.profile-section-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+}
+
+.chips-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.chip-tag {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  border: 1px solid rgba(109, 93, 252, 0.22);
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.profile-detail-text {
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.profile-detail-text p {
+  margin: 2px 0;
+}
+
+.ai-context-preview {
+  background: #f4f5fb;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 13px;
+  font-size: 0.8rem;
+  color: #4a5168;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  font-family: "Manrope", monospace;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+/* ── Updated bottom nav: 4 equal buttons with labels ── */
+.bottom-nav button {
+  border: 0;
+  background: transparent;
+  color: #7b8190;
+  width: auto;
+  height: auto;
+  padding: 8px 14px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: inherit;
+  flex: 1;
+}
+
+.nav-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.nav-label {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.bottom-nav button.active {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+/* ── Remove old overview-only rule (screen renamed to home) ── */
+body[data-active-screen="overview"] .hero-content,
+body[data-active-screen="overview"] .quick-stats {
+  display: none;
+}
+
+/* ── Home screen: compact textarea ── */
+#homeQuickCapture {
+  min-height: 76px;
+}
+
+@media (max-width: 420px) {
+  .stats-row {
+    gap: 6px;
+  }
+
+  .stat-btn strong {
+    font-size: 1.25rem;
+  }
+
+  .stat-btn span {
+    font-size: 0.62rem;
+  }
+
+  .chip {
+    padding: 9px 14px;
+    font-size: 0.86rem;
+  }
+
+  .welcome-slogan {
+    font-size: 1.3rem;
+  }
+}

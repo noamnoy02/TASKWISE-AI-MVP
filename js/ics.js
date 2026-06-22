@@ -17,15 +17,17 @@ function sanitizeFileName(value) {
 }
 
 export function downloadIcsFile(task) {
-  const date = task.dueDate || new Date().toISOString().slice(0, 10);
-  const start = `${date.replaceAll("-", "")}T090000`;
-  const end = `${date.replaceAll("-", "")}T100000`;
+  const dateStr = task.dueDate || new Date().toISOString().slice(0, 10);
+  const startDate = new Date(`${dateStr}T09:00:00`);
+  const durationMs = (Number(task.durationMinutes) || 60) * 60 * 1000;
+  const endDate = new Date(startDate.getTime() + durationMs);
+
   const uid = `${task.id}@taskwise-ai`;
 
-  const descriptionParts = [
+  const descParts = [
     task.notes || "",
     task.suggestedAction ? `Next action: ${task.suggestedAction}` : "",
-    task.missingInfo && task.missingInfo.length ? `Missing info: ${task.missingInfo.join(", ")}` : "",
+    task.missingInfo?.length ? `Missing info: ${task.missingInfo.join(", ")}` : "",
     task.originalText ? `Original text: ${task.originalText}` : ""
   ].filter(Boolean);
 
@@ -36,23 +38,22 @@ export function downloadIcsFile(task) {
     "BEGIN:VEVENT",
     `UID:${escapeIcs(uid)}`,
     `DTSTAMP:${formatIcsDateTime(new Date())}`,
-    `DTSTART:${start}`,
-    `DTEND:${end}`,
+    `DTSTART:${formatIcsDateTime(startDate)}`,
+    `DTEND:${formatIcsDateTime(endDate)}`,
     `SUMMARY:${escapeIcs(task.title)}`,
-    `DESCRIPTION:${escapeIcs(descriptionParts.join("\\n"))}`,
+    `DESCRIPTION:${escapeIcs(descParts.join("\\n"))}`,
+    task.category ? `CATEGORIES:${escapeIcs(task.category)}` : "",
     "END:VEVENT",
     "END:VCALENDAR"
-  ].join("\r\n");
+  ].filter(Boolean).join("\r\n");
 
   const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-
   link.href = url;
   link.download = `${sanitizeFileName(task.title || "task")}.ics`;
   document.body.appendChild(link);
   link.click();
   link.remove();
-
   URL.revokeObjectURL(url);
 }

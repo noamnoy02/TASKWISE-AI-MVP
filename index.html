@@ -3,165 +3,358 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TaskWise AI MVP</title>
+  <title>TaskWise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app-shell">
-    <header class="app-header">
-      <div class="header-top">
-        <div class="user-chip">
-          <div class="avatar">N</div>
-          <div>
-            <p class="muted small-text">Welcome back</p>
-            <h1>Noam</h1>
-          </div>
-        </div>
-
-        <div class="header-actions">
-          <button id="editContextBtn" class="icon-btn" type="button" title="Edit Context">⚙️</button>
-          <button id="resetDemoBtn" class="icon-btn" type="button" title="Reset Demo">↺</button>
-        </div>
-      </div>
-
-      <div class="hero-content">
-        <p class="eyebrow">TaskWise AI</p>
-        <h2>Your AI task cockpit</h2>
-        <p class="subtitle">
-          Paste messy messages, emails or reminders. TaskWise turns them into structured, prioritized tasks with owners and next actions.
-        </p>
-      </div>
-
-      <div class="quick-stats">
-        <article class="stat-card purple">
-          <span class="stat-icon">✦</span>
-          <strong>Smart</strong>
-          <p>AI Capture</p>
-        </article>
-
-        <article class="stat-card peach">
-          <span class="stat-icon">⏱</span>
-          <strong>Next</strong>
-          <p>Best Action</p>
-        </article>
-
-        <article class="stat-card blue">
-          <span class="stat-icon">👥</span>
-          <strong>Shared</strong>
-          <p>Ownership</p>
-        </article>
-
-        <article class="stat-card green">
-          <span class="stat-icon">📅</span>
-          <strong>Calendar</strong>
-          <p>ICS Export</p>
-        </article>
-      </div>
-    </header>
-
     <main>
-      <!-- Onboarding is a dedicated full screen: shown on first run (no
-           profile saved yet) or whenever the gear icon is clicked. It is
-           never mixed into the dashboard scroll. -->
-      <section id="onboardingScreen" class="screen" data-screen="onboarding">
-        <section class="panel onboarding-panel">
-          <div class="panel-header">
-            <div>
-              <p class="eyebrow">Quick onboarding</p>
-              <h2>Help the AI understand your world</h2>
-              <p class="muted">
-                Optional. You can skip now and return later. This helps the AI classify tasks more accurately.
-              </p>
-            </div>
-            <button id="skipOnboardingBtn" class="ghost-btn" type="button">Skip for demo</button>
+
+      <!-- ═══════════════════════════════════════
+           PRE-NAV SCREENS  (no bottom nav)
+           ═══════════════════════════════════════ -->
+
+      <!-- WELCOME -->
+      <section id="welcomeScreen" class="screen" data-screen="welcome">
+        <div class="fullscreen-center">
+          <div class="welcome-brand">
+            <div class="brand-icon-lg">✦</div>
+            <h1 class="brand-title">TASKWISE</h1>
           </div>
-
-          <form id="onboardingForm" class="form-grid">
-            <label>
-              What do you do for work?
-              <input id="workInput" type="text" placeholder="e.g. Information security project manager" />
-            </label>
-
-            <label>
-              Are you studying? What field?
-              <input id="studiesInput" type="text" placeholder="e.g. Product management seminar, high-tech studies" />
-            </label>
-
-            <label>
-              Relevant life areas
-              <input id="lifeAreasInput" type="text" placeholder="e.g. Work, Studies, Family, Personal, Home" />
-            </label>
-
-            <label>
-              Recurring people
-              <input id="peopleInput" type="text" placeholder="e.g. Harel, Dani, lecturer, clients" />
-            </label>
-
-            <label class="full-width">
-              Recurring projects / clients / topics
-              <textarea id="projectsInput" rows="3" placeholder="e.g. Security surveys, seminar project, final reports, family tasks"></textarea>
-            </label>
-
-            <div class="form-actions full-width">
-              <button class="primary-btn" type="submit">Save Context</button>
-              <button id="clearContextBtn" class="secondary-btn" type="button">Clear Context</button>
-            </div>
-          </form>
-        </section>
+          <div class="welcome-hero">
+            <h2 class="welcome-slogan">Turn scattered responsibilities into clear next steps.</h2>
+            <p class="welcome-support">Stay in control of work, studies, family, and everyday life.</p>
+          </div>
+          <div class="welcome-actions">
+            <button id="getStartedBtn" class="primary-btn welcome-btn" type="button">Get Started</button>
+            <button id="returningUserBtn" class="ghost-btn" type="button">I already have a profile</button>
+          </div>
+        </div>
       </section>
 
-      <!-- Overview: the landing screen. Next Best Action lives here. -->
-      <section id="overviewScreen" class="screen" data-screen="overview">
-        <section class="panel next-action-panel">
+      <!-- USER ENTRY -->
+      <section id="userentryScreen" class="screen" data-screen="userentry">
+        <div class="fullscreen-center">
+          <div class="userentry-brand">
+            <span class="brand-icon-sm">✦</span>
+            <span class="brand-label">TASKWISE</span>
+          </div>
+          <h2 id="userentryHeading" class="userentry-heading">Let's get started</h2>
+          <p class="muted" id="userentryDesc">Enter your email or username to continue.</p>
+          <form id="userentryForm" class="userentry-form">
+            <label for="userentryInput">
+              Email or username
+              <input id="userentryInput" type="text" placeholder="e.g. alex@email.com or alex"
+                     autocomplete="username" required />
+            </label>
+            <button class="primary-btn welcome-btn" type="submit">Continue</button>
+          </form>
+          <div id="userentryError" class="error-box hidden"></div>
+          <button id="backToWelcomeBtn" class="ghost-btn back-link" type="button">← Back</button>
+        </div>
+      </section>
+
+      <!-- ONBOARDING (multi-step) -->
+      <section id="onboardingScreen" class="screen" data-screen="onboarding">
+        <div class="onboarding-container">
+
+          <div class="onboarding-progress-bar">
+            <div class="progress-track">
+              <div id="progressFill" class="progress-fill" style="width:12.5%"></div>
+            </div>
+            <p id="progressText" class="progress-label">Step 1 of 8</p>
+          </div>
+
+          <!-- Step 1: Introduction -->
+          <div class="onboarding-step" id="obStep1">
+            <div class="step-emoji">✦</div>
+            <h2 class="step-title">Let's personalize TaskWise</h2>
+            <p class="step-body">A few quick questions will help TaskWise understand your responsibilities and classify your tasks more accurately.</p>
+            <div class="step-actions">
+              <button id="ob1Btn" class="primary-btn welcome-btn" type="button">Let's Start</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Life areas -->
+          <div class="onboarding-step hidden" id="obStep2">
+            <h2 class="step-title">Which areas are part of your daily life?</h2>
+            <p class="muted">Select all that apply. At least one is required.</p>
+            <div class="chip-grid" id="lifeAreasChips" data-multi="true">
+              <button class="chip" type="button" data-value="Work">Work</button>
+              <button class="chip" type="button" data-value="Studies">Studies</button>
+              <button class="chip" type="button" data-value="Family">Family</button>
+              <button class="chip" type="button" data-value="Home">Home</button>
+              <button class="chip" type="button" data-value="Personal">Personal</button>
+              <button class="chip" type="button" data-value="Health">Health</button>
+              <button class="chip" type="button" data-value="Finances">Finances</button>
+            </div>
+            <p id="lifeAreasError" class="field-error hidden">Please select at least one area.</p>
+            <div class="step-actions">
+              <button id="ob2Btn" class="primary-btn" type="button">Continue</button>
+              <button class="ghost-btn ob-back" type="button">← Back</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Current situation -->
+          <div class="onboarding-step hidden" id="obStep3">
+            <h2 class="step-title">Which option best describes you right now?</h2>
+            <div class="chip-grid" id="situationChips" data-multi="false">
+              <button class="chip" type="button" data-value="I work">I work</button>
+              <button class="chip" type="button" data-value="I study">I study</button>
+              <button class="chip chip-wide" type="button" data-value="I work and study">I work and study</button>
+              <button class="chip chip-wide" type="button" data-value="I manage family or household responsibilities">I manage family or household</button>
+              <button class="chip chip-wide" type="button" data-value="A combination of several areas">A combination of several areas</button>
+              <button class="chip" type="button" data-value="Other">Other</button>
+            </div>
+            <div class="step-actions">
+              <button id="ob3Btn" class="primary-btn" type="button">Continue</button>
+              <button class="ghost-btn ob-back" type="button">← Back</button>
+            </div>
+          </div>
+
+          <!-- Step 4: Work context (conditional) -->
+          <div class="onboarding-step hidden" id="obStep4">
+            <h2 class="step-title">What kind of work do you do?</h2>
+            <div class="chip-grid" id="industryChips" data-multi="false">
+              <button class="chip" type="button" data-value="Technology">Technology</button>
+              <button class="chip" type="button" data-value="Project management">Project management</button>
+              <button class="chip" type="button" data-value="Finance">Finance</button>
+              <button class="chip" type="button" data-value="Education">Education</button>
+              <button class="chip" type="button" data-value="Healthcare">Healthcare</button>
+              <button class="chip" type="button" data-value="Marketing">Marketing</button>
+              <button class="chip" type="button" data-value="Operations">Operations</button>
+              <button class="chip" type="button" data-value="Other">Other</button>
+            </div>
+            <label for="workRoleInput" class="mt-sm">
+              Your role or profession <span class="optional">(optional)</span>
+              <input id="workRoleInput" type="text" placeholder="e.g. Project Manager in cybersecurity" />
+            </label>
+            <label>
+              Common projects, clients, or people <span class="optional">(optional)</span>
+              <input id="workProjectsInput" type="text" placeholder="e.g. Harel, security surveys, internal projects" />
+            </label>
+            <div class="step-actions">
+              <button id="ob4Btn" class="primary-btn" type="button">Continue</button>
+              <button id="ob4SkipBtn" class="secondary-btn" type="button">Skip for now</button>
+              <button class="ghost-btn ob-back" type="button">← Back</button>
+            </div>
+          </div>
+
+          <!-- Step 5: Study context (conditional) -->
+          <div class="onboarding-step hidden" id="obStep5">
+            <h2 class="step-title">What are you currently studying?</h2>
+            <div class="chip-grid" id="studyTypeChips" data-multi="false">
+              <button class="chip" type="button" data-value="Undergraduate degree">Undergraduate degree</button>
+              <button class="chip" type="button" data-value="Graduate degree">Graduate degree</button>
+              <button class="chip" type="button" data-value="Professional course">Professional course</button>
+              <button class="chip" type="button" data-value="Certification">Certification</button>
+              <button class="chip" type="button" data-value="School">School</button>
+              <button class="chip" type="button" data-value="Other">Other</button>
+            </div>
+            <label for="studyFieldInput" class="mt-sm">
+              Field of study <span class="optional">(optional)</span>
+              <input id="studyFieldInput" type="text" placeholder="e.g. Computer Science, Business" />
+            </label>
+            <label>
+              Institution <span class="optional">(optional)</span>
+              <input id="studyInstitutionInput" type="text" placeholder="e.g. Tel Aviv University" />
+            </label>
+            <label>
+              Common courses or projects <span class="optional">(optional)</span>
+              <input id="studyProjectsInput" type="text" placeholder="e.g. Seminar project, Advanced algorithms" />
+            </label>
+            <div class="step-actions">
+              <button id="ob5Btn" class="primary-btn" type="button">Continue</button>
+              <button id="ob5SkipBtn" class="secondary-btn" type="button">Skip for now</button>
+              <button class="ghost-btn ob-back" type="button">← Back</button>
+            </div>
+          </div>
+
+          <!-- Step 6: Family / Home context (conditional) -->
+          <div class="onboarding-step hidden" id="obStep6">
+            <h2 class="step-title">What responsibilities do you usually manage?</h2>
+            <p class="muted">Select all that apply.</p>
+            <div class="chip-grid" id="familyChips" data-multi="true">
+              <button class="chip" type="button" data-value="Children">Children</button>
+              <button class="chip" type="button" data-value="Household tasks">Household tasks</button>
+              <button class="chip" type="button" data-value="Appointments">Appointments</button>
+              <button class="chip chip-wide" type="button" data-value="Shopping and errands">Shopping and errands</button>
+              <button class="chip chip-wide" type="button" data-value="Bills and payments">Bills and payments</button>
+              <button class="chip chip-wide" type="button" data-value="Shared responsibilities with a partner">Shared with a partner</button>
+              <button class="chip" type="button" data-value="Other">Other</button>
+            </div>
+            <div class="step-actions">
+              <button id="ob6Btn" class="primary-btn" type="button">Continue</button>
+              <button id="ob6SkipBtn" class="secondary-btn" type="button">Skip for now</button>
+              <button class="ghost-btn ob-back" type="button">← Back</button>
+            </div>
+          </div>
+
+          <!-- Step 7: Common task types -->
+          <div class="onboarding-step hidden" id="obStep7">
+            <h2 class="step-title">What types of tasks do you handle most often?</h2>
+            <p class="muted">Select all that apply.</p>
+            <div class="chip-grid" id="taskTypesChips" data-multi="true">
+              <button class="chip" type="button" data-value="Meetings">Meetings</button>
+              <button class="chip" type="button" data-value="Reports">Reports</button>
+              <button class="chip" type="button" data-value="Assignments">Assignments</button>
+              <button class="chip chip-wide" type="button" data-value="Emails and follow-ups">Emails and follow-ups</button>
+              <button class="chip" type="button" data-value="Bills">Bills</button>
+              <button class="chip" type="button" data-value="Appointments">Appointments</button>
+              <button class="chip chip-wide" type="button" data-value="Shopping and errands">Shopping and errands</button>
+              <button class="chip" type="button" data-value="Family tasks">Family tasks</button>
+              <button class="chip chip-wide" type="button" data-value="Personal reminders">Personal reminders</button>
+              <button class="chip" type="button" data-value="Other">Other</button>
+            </div>
+            <div class="step-actions">
+              <button id="ob7Btn" class="primary-btn" type="button">Continue</button>
+              <button id="ob7SkipBtn" class="secondary-btn" type="button">Skip for now</button>
+              <button class="ghost-btn ob-back" type="button">← Back</button>
+            </div>
+          </div>
+
+          <!-- Step 8: Completion -->
+          <div class="onboarding-step hidden" id="obStep8">
+            <div class="step-emoji completion-emoji">✦</div>
+            <h2 class="step-title">TaskWise is ready for you</h2>
+            <p class="step-body">Your profile will help the AI understand whether a task belongs to work, studies, family, or another part of your life. You can update this information at any time.</p>
+            <div class="step-actions">
+              <button id="ob8Btn" class="primary-btn welcome-btn" type="button">Go to TaskWise</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════
+           MAIN APP SCREENS  (bottom nav visible)
+           ═══════════════════════════════════════ -->
+
+      <!-- HOME -->
+      <section id="homeScreen" class="screen" data-screen="home">
+
+        <div class="home-greeting">
+          <h2 id="homeGreeting" class="greeting-title">Good morning</h2>
+          <p class="muted greeting-sub">Here's what needs your attention today.</p>
+        </div>
+
+        <!-- Smart Capture -->
+        <section class="panel highlight-panel home-capture-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Smart Capture</p>
+              <h3 class="panel-h3">Turn any message into a clear task</h3>
+              <p class="muted capture-intro">Copy a task, request, email, meeting invitation, or reminder from any app and paste it here. TaskWise will identify the action, deadline, category, and missing details.</p>
+            </div>
+          </div>
+          <div class="source-chips">
+            <span class="source-chip">💬 WhatsApp</span>
+            <span class="source-chip">✉️ Gmail</span>
+            <span class="source-chip">📧 Outlook</span>
+            <span class="source-chip">📅 Calendar</span>
+            <span class="source-chip">📝 Notes</span>
+            <span class="source-chip">+ Other</span>
+          </div>
+          <textarea id="homeQuickCapture" rows="3"
+            placeholder="Paste a message, email, invitation, or reminder here…"></textarea>
+          <p class="capture-example">Example: "Send the final report to Harel for survey X by Thursday."</p>
+          <div class="capture-actions">
+            <button id="homeCreateTaskBtn" class="primary-btn" type="button">Create Task with AI</button>
+            <button id="homeAddManualBtn" class="secondary-btn" type="button">Add task manually</button>
+          </div>
+        </section>
+
+        <!-- Today overview stats -->
+        <div class="today-section">
+          <div class="stats-row">
+            <button class="stat-btn" type="button" data-home-filter="today">
+              <strong id="statToday">0</strong>
+              <span>Due today</span>
+            </button>
+            <button class="stat-btn overdue-stat" type="button" data-home-filter="overdue">
+              <strong id="statOverdue">0</strong>
+              <span>Overdue</span>
+            </button>
+            <button class="stat-btn" type="button" data-home-filter="upcoming">
+              <strong id="statUpcoming">0</strong>
+              <span>Upcoming</span>
+            </button>
+            <button class="stat-btn done-stat" type="button" data-home-filter="done">
+              <strong id="statDone">0</strong>
+              <span>Completed</span>
+            </button>
+          </div>
+          <div id="homeFilterBar" class="filter-bar hidden">
+            Showing: <strong id="homeFilterLabel"></strong>
+            <button id="homeClearFilter" class="ghost-btn small-btn-inline" type="button">Clear ✕</button>
+          </div>
+        </div>
+
+        <!-- Priority tasks -->
+        <section class="panel">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Smart Prioritization</p>
-              <h2>Next Best Action</h2>
-              <p class="muted">
-                A clear recommendation based on priority, deadline, owner and missing information.
-              </p>
+              <h3 class="panel-h3">Your next priorities</h3>
             </div>
           </div>
-
-          <div id="nextActionBox" class="next-action-box empty-state">
-            No saved tasks yet. Create your first smart task.
+          <div id="homePriorityList" class="tasks-list empty-state">
+            No tasks yet. Use Smart Capture above to create your first task.
           </div>
         </section>
+
+        <!-- Upcoming schedule -->
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Calendar</p>
+              <h3 class="panel-h3">Upcoming schedule</h3>
+            </div>
+          </div>
+          <div id="homeSchedule" class="calendar-agenda empty-state">
+            No scheduled tasks yet.
+          </div>
+        </section>
+
       </section>
 
-      <!-- Capture: two steps inside one screen - paste text, then review the
-           AI's (or fallback's) extracted task before saving. -->
+      <!-- CAPTURE -->
       <section id="captureScreen" class="screen" data-screen="capture">
+
         <div id="captureStep">
           <section class="panel capture-panel highlight-panel">
             <div class="panel-header">
               <div>
                 <p class="eyebrow">Smart Capture</p>
                 <h2>Create a task from any text</h2>
-                <p class="muted">
-                  Paste a message, email, invite or reminder. The AI will extract the task details for you.
-                </p>
+                <p class="muted">Paste a message, email, invite or reminder. The AI will extract the task details for you.</p>
               </div>
               <span id="contextStatus" class="status-pill">No context yet</span>
             </div>
-
-            <label for="sourceTextInput" class="input-label">Source text</label>
-            <textarea
-              id="sourceTextInput"
-              rows="8"
-              placeholder="Example: להעביר להראל את הדוח הסופי לסקר X עד חמישי בערב, זה דחוף כי הלקוח מחכה לזה."
-            ></textarea>
-
-            <div class="capture-actions">
-              <button id="createTaskBtn" class="primary-btn" type="button">Create Smart Task</button>
-              <button id="loadExampleBtn" class="secondary-btn" type="button">Load Example</button>
+            <div class="source-chips" id="captureSourceChips">
+              <button class="source-chip" type="button" data-source="WhatsApp">💬 WhatsApp</button>
+              <button class="source-chip" type="button" data-source="Gmail">✉️ Gmail</button>
+              <button class="source-chip" type="button" data-source="Outlook">📧 Outlook</button>
+              <button class="source-chip" type="button" data-source="Calendar">📅 Calendar</button>
+              <button class="source-chip" type="button" data-source="Notes">📝 Notes</button>
+              <button class="source-chip" type="button" data-source="Other">+ Other</button>
             </div>
-
+            <label for="sourceTextInput" class="input-label">Source text</label>
+            <textarea id="sourceTextInput" rows="6"
+              placeholder="Paste a message, email, invitation, or reminder here…"></textarea>
+            <p class="capture-example">Example: "Send the final report to Harel for survey X by Thursday."</p>
+            <div class="capture-actions">
+              <button id="createTaskBtn" class="primary-btn" type="button">Create Task with AI</button>
+              <button id="addManualTaskBtn" class="secondary-btn" type="button">Add task manually</button>
+              <button id="loadExampleBtn" class="ghost-btn" type="button">Load example</button>
+            </div>
             <div id="loadingState" class="loading-state hidden">
               <div class="spinner"></div>
-              <span>AI is analyzing the text...</span>
+              <span>AI is analyzing the text…</span>
             </div>
-
             <div id="infoState" class="info-box hidden"></div>
             <div id="errorState" class="error-box hidden"></div>
           </section>
@@ -173,19 +366,15 @@
               <div>
                 <p class="eyebrow">Editable Preview</p>
                 <h2>Review before saving</h2>
-                <p class="muted">
-                  Edit anything the AI extracted before adding it to your task board.
-                </p>
+                <p class="muted">Edit anything the AI extracted before adding it to your tasks.</p>
               </div>
               <span id="aiSourceBadge" class="status-pill">AI result</span>
             </div>
-
             <form id="previewForm" class="form-grid">
-              <label>
+              <label class="full-width">
                 Task name
                 <input id="previewTitle" type="text" required />
               </label>
-
               <label>
                 Category
                 <select id="previewCategory">
@@ -199,17 +388,6 @@
                   <option>Other</option>
                 </select>
               </label>
-
-              <label>
-                Deadline text
-                <input id="previewDeadlineText" type="text" placeholder="e.g. Thursday evening" />
-              </label>
-
-              <label>
-                Due date
-                <input id="previewDueDate" type="date" />
-              </label>
-
               <label>
                 Priority
                 <select id="previewPriority">
@@ -219,15 +397,27 @@
                   <option>Urgent</option>
                 </select>
               </label>
-
+              <label>
+                Deadline
+                <input id="previewDeadlineText" type="text" placeholder="e.g. Thursday evening" />
+              </label>
+              <label>
+                Due date
+                <input id="previewDueDate" type="date" />
+              </label>
               <label>
                 Owner
-                <input id="previewOwner" type="text" placeholder="e.g. Noam, Harel, Team, Unassigned" />
+                <input id="previewOwner" type="text" placeholder="e.g. Me, Harel, Unassigned" />
               </label>
-
               <label>
                 Source
                 <select id="previewSourceType">
+                  <option>WhatsApp</option>
+                  <option>Gmail</option>
+                  <option>Outlook</option>
+                  <option>Calendar</option>
+                  <option>Notes</option>
+                  <option>Manual</option>
                   <option>Message</option>
                   <option>Email</option>
                   <option>Calendar Invite</option>
@@ -236,32 +426,26 @@
                   <option>Other</option>
                 </select>
               </label>
-
               <label>
-                Estimated duration, minutes
+                Estimated duration (min)
                 <input id="previewDuration" type="number" min="5" step="5" />
               </label>
-
               <label class="full-width">
                 Notes
                 <textarea id="previewNotes" rows="3"></textarea>
               </label>
-
               <label class="full-width">
                 Missing information
-                <textarea id="previewMissingInfo" rows="3" placeholder="One item per line"></textarea>
+                <textarea id="previewMissingInfo" rows="2" placeholder="One item per line"></textarea>
               </label>
-
               <label class="full-width">
                 Suggested next action
                 <textarea id="previewSuggestedAction" rows="2"></textarea>
               </label>
-
               <label class="full-width">
                 Priority reason
                 <textarea id="previewPriorityReason" rows="2"></textarea>
               </label>
-
               <div class="form-actions full-width">
                 <button class="primary-btn" type="submit">Save Task</button>
                 <button id="cancelPreviewBtn" class="secondary-btn" type="button">Cancel</button>
@@ -269,80 +453,101 @@
             </form>
           </section>
         </div>
+
       </section>
 
-      <!-- Tasks: board and ownership share the screen as tabs instead of
-           always rendering both at once. -->
-      <section id="tasksScreen" class="screen" data-screen="tasks">
-        <div class="tabs-bar">
-          <button class="tab-btn" type="button" data-tab="board">Task Board</button>
-          <button class="tab-btn" type="button" data-tab="ownership">Shared Ownership</button>
-        </div>
-
-        <div id="tasksBoardTab" class="tab-panel">
-          <section class="panel tasks-panel">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Task Board</p>
-                <h2>Saved tasks</h2>
-                <p class="muted">
-                  Your extracted tasks, sorted by urgency and actionability.
-                </p>
-              </div>
-              <button id="clearTasksBtn" class="ghost-btn" type="button">Clear Tasks</button>
-            </div>
-
-            <div id="tasksList" class="tasks-list empty-state">
-              No tasks saved yet.
-            </div>
-          </section>
-        </div>
-
-        <div id="ownershipTab" class="tab-panel">
-          <section class="panel ownership-panel">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Shared Ownership</p>
-                <h2>Who owns what?</h2>
-                <p class="muted">
-                  See what is open, stuck, overdue or still unassigned.
-                </p>
-              </div>
-            </div>
-
-            <div id="ownershipBoard" class="ownership-board empty-state">
-              No ownership data yet.
-            </div>
-          </section>
-        </div>
-      </section>
-
-      <!-- Calendar: agenda view of open tasks grouped by due date, with a
-           per-task .ics export (reuses the same export used on the Tasks screen). -->
-      <section id="calendarScreen" class="screen" data-screen="calendar">
-        <section class="panel calendar-panel">
+      <!-- SHARED OWNERSHIP -->
+      <section id="sharedScreen" class="screen" data-screen="shared">
+        <section class="panel">
           <div class="panel-header">
             <div>
-              <p class="eyebrow">Agenda</p>
-              <h2>What's coming up</h2>
-              <p class="muted">
-                Open tasks grouped by due date. Export any of them to your calendar.
-              </p>
+              <p class="eyebrow">Collaboration</p>
+              <h2>Shared Ownership</h2>
+              <p class="muted">See who owns what, what's overdue, and what still needs an owner.</p>
             </div>
           </div>
-
-          <div id="calendarAgenda" class="calendar-agenda empty-state">
-            No open tasks to schedule yet.
+          <div class="tabs-bar">
+            <button class="tab-btn active" type="button" data-shared-tab="tasks">All Tasks</button>
+            <button class="tab-btn" type="button" data-shared-tab="owners">By Owner</button>
+          </div>
+          <div id="sharedTasksTab" class="tab-panel is-active">
+            <div id="sharedTasksList" class="tasks-list empty-state">No tasks yet.</div>
+          </div>
+          <div id="sharedOwnersTab" class="tab-panel">
+            <div id="sharedOwnerBoard" class="ownership-board empty-state">No ownership data yet.</div>
           </div>
         </section>
       </section>
+
+      <!-- PROFILE -->
+      <section id="profileScreen" class="screen" data-screen="profile">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Your Profile</h2>
+              <p class="muted">Your personalization context and AI settings.</p>
+            </div>
+          </div>
+          <div class="profile-card">
+            <div class="profile-avatar" id="profileAvatar">?</div>
+            <div>
+              <h3 id="profileDisplayName" class="profile-name">—</h3>
+              <p class="muted" id="profileIdentifier">—</p>
+            </div>
+          </div>
+          <div class="profile-section" id="profileLifeAreasSection">
+            <h4 class="profile-section-title">Life areas</h4>
+            <div id="profileLifeAreasChips" class="chips-display"></div>
+          </div>
+          <div class="profile-section" id="profileWorkSection">
+            <h4 class="profile-section-title">Work</h4>
+            <div id="profileWorkDetail" class="profile-detail-text"></div>
+          </div>
+          <div class="profile-section" id="profileStudySection">
+            <h4 class="profile-section-title">Studies</h4>
+            <div id="profileStudyDetail" class="profile-detail-text"></div>
+          </div>
+          <div class="profile-section" id="profileFamilySection">
+            <h4 class="profile-section-title">Family &amp; Home</h4>
+            <div id="profileFamilyChips" class="chips-display"></div>
+          </div>
+          <div class="profile-section" id="profileTaskTypesSection">
+            <h4 class="profile-section-title">Common task types</h4>
+            <div id="profileTaskTypesChips" class="chips-display"></div>
+          </div>
+          <div class="profile-section">
+            <h4 class="profile-section-title">AI personalization context</h4>
+            <div id="profileAiContext" class="ai-context-preview">
+              <span class="muted">Complete onboarding to see your AI context.</span>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button id="editProfileBtn" class="primary-btn" type="button">Edit Profile</button>
+            <button id="switchProfileBtn" class="secondary-btn" type="button">Switch Profile</button>
+          </div>
+        </section>
+      </section>
+
     </main>
 
-    <nav class="bottom-nav">
-      <button type="button" data-nav-target="overview" title="Overview">⌂</button>
-      <button type="button" data-nav-target="tasks" title="Tasks">☑</button>
-      <button type="button" class="nav-main" data-nav-target="capture" title="Create">＋</button>
-      <button type="button" data-nav-target="calendar" title="Calendar">◷</button>
+    <!-- Bottom navigation -->
+    <nav class="bottom-nav" id="bottomNav">
+      <button type="button" data-nav-target="home" title="Home">
+        <span class="nav-icon">⌂</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button type="button" data-nav-target="capture" title="Capture">
+        <span class="nav-icon">✦</span>
+        <span class="nav-label">Capture</span>
+      </button>
+      <button type="button" data-nav-target="shared" title="Shared">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Shared</span>
+      </button>
+      <button type="button" data-nav-target="profile" title="Profile">
+        <span class="nav-icon">◉</span>
+        <span class="nav-label">Profile</span>
+      </button>
     </nav>
   </div>
 
