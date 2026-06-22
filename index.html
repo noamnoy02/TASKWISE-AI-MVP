@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskWise AI MVP</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="header-top">
+        <div class="user-chip">
+          <div class="avatar">N</div>
+          <div>
+            <p class="muted small-text">Welcome back</p>
+            <h1>Noam</h1>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button id="editContextBtn" class="icon-btn" type="button" title="Edit Context">⚙️</button>
+          <button id="resetDemoBtn" class="icon-btn" type="button" title="Reset Demo">↺</button>
+        </div>
+      </div>
+
+      <div class="hero-content">
+        <p class="eyebrow">TaskWise AI</p>
+        <h2>Your AI task cockpit</h2>
+        <p class="subtitle">
+          Paste messy messages, emails or reminders. TaskWise turns them into structured, prioritized tasks with owners and next actions.
+        </p>
+      </div>
+
+      <div class="quick-stats">
+        <article class="stat-card purple">
+          <span class="stat-icon">✦</span>
+          <strong>Smart</strong>
+          <p>AI Capture</p>
+        </article>
+
+        <article class="stat-card peach">
+          <span class="stat-icon">⏱</span>
+          <strong>Next</strong>
+          <p>Best Action</p>
+        </article>
+
+        <article class="stat-card blue">
+          <span class="stat-icon">👥</span>
+          <strong>Shared</strong>
+          <p>Ownership</p>
+        </article>
+
+        <article class="stat-card green">
+          <span class="stat-icon">📅</span>
+          <strong>Calendar</strong>
+          <p>ICS Export</p>
+        </article>
+      </div>
+    </header>
+
+    <main>
+      <!-- Onboarding is a dedicated full screen: shown on first run (no
+           profile saved yet) or whenever the gear icon is clicked. It is
+           never mixed into the dashboard scroll. -->
+      <section id="onboardingScreen" class="screen" data-screen="onboarding">
+        <section class="panel onboarding-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Quick onboarding</p>
+              <h2>Help the AI understand your world</h2>
+              <p class="muted">
+                Optional. You can skip now and return later. This helps the AI classify tasks more accurately.
+              </p>
+            </div>
+            <button id="skipOnboardingBtn" class="ghost-btn" type="button">Skip for demo</button>
+          </div>
+
+          <form id="onboardingForm" class="form-grid">
+            <label>
+              What do you do for work?
+              <input id="workInput" type="text" placeholder="e.g. Information security project manager" />
+            </label>
+
+            <label>
+              Are you studying? What field?
+              <input id="studiesInput" type="text" placeholder="e.g. Product management seminar, high-tech studies" />
+            </label>
+
+            <label>
+              Relevant life areas
+              <input id="lifeAreasInput" type="text" placeholder="e.g. Work, Studies, Family, Personal, Home" />
+            </label>
+
+            <label>
+              Recurring people
+              <input id="peopleInput" type="text" placeholder="e.g. Harel, Dani, lecturer, clients" />
+            </label>
+
+            <label class="full-width">
+              Recurring projects / clients / topics
+              <textarea id="projectsInput" rows="3" placeholder="e.g. Security surveys, seminar project, final reports, family tasks"></textarea>
+            </label>
+
+            <div class="form-actions full-width">
+              <button class="primary-btn" type="submit">Save Context</button>
+              <button id="clearContextBtn" class="secondary-btn" type="button">Clear Context</button>
+            </div>
+          </form>
+        </section>
+      </section>
+
+      <!-- Overview: the landing screen. Next Best Action lives here. -->
+      <section id="overviewScreen" class="screen" data-screen="overview">
+        <section class="panel next-action-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Smart Prioritization</p>
+              <h2>Next Best Action</h2>
+              <p class="muted">
+                A clear recommendation based on priority, deadline, owner and missing information.
+              </p>
+            </div>
+          </div>
+
+          <div id="nextActionBox" class="next-action-box empty-state">
+            No saved tasks yet. Create your first smart task.
+          </div>
+        </section>
+      </section>
+
+      <!-- Capture: two steps inside one screen - paste text, then review the
+           AI's (or fallback's) extracted task before saving. -->
+      <section id="captureScreen" class="screen" data-screen="capture">
+        <div id="captureStep">
+          <section class="panel capture-panel highlight-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Smart Capture</p>
+                <h2>Create a task from any text</h2>
+                <p class="muted">
+                  Paste a message, email, invite or reminder. The AI will extract the task details for you.
+                </p>
+              </div>
+              <span id="contextStatus" class="status-pill">No context yet</span>
+            </div>
+
+            <label for="sourceTextInput" class="input-label">Source text</label>
+            <textarea
+              id="sourceTextInput"
+              rows="8"
+              placeholder="Example: להעביר להראל את הדוח הסופי לסקר X עד חמישי בערב, זה דחוף כי הלקוח מחכה לזה."
+            ></textarea>
+
+            <div class="capture-actions">
+              <button id="createTaskBtn" class="primary-btn" type="button">Create Smart Task</button>
+              <button id="loadExampleBtn" class="secondary-btn" type="button">Load Example</button>
+            </div>
+
+            <div id="loadingState" class="loading-state hidden">
+              <div class="spinner"></div>
+              <span>AI is analyzing the text...</span>
+            </div>
+
+            <div id="infoState" class="info-box hidden"></div>
+            <div id="errorState" class="error-box hidden"></div>
+          </section>
+        </div>
+
+        <div id="previewStep" class="hidden">
+          <section class="panel preview-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Editable Preview</p>
+                <h2>Review before saving</h2>
+                <p class="muted">
+                  Edit anything the AI extracted before adding it to your task board.
+                </p>
+              </div>
+              <span id="aiSourceBadge" class="status-pill">AI result</span>
+            </div>
+
+            <form id="previewForm" class="form-grid">
+              <label>
+                Task name
+                <input id="previewTitle" type="text" required />
+              </label>
+
+              <label>
+                Category
+                <select id="previewCategory">
+                  <option>Work</option>
+                  <option>Studies</option>
+                  <option>Family</option>
+                  <option>Personal</option>
+                  <option>Home</option>
+                  <option>Finance</option>
+                  <option>Health</option>
+                  <option>Other</option>
+                </select>
+              </label>
+
+              <label>
+                Deadline text
+                <input id="previewDeadlineText" type="text" placeholder="e.g. Thursday evening" />
+              </label>
+
+              <label>
+                Due date
+                <input id="previewDueDate" type="date" />
+              </label>
+
+              <label>
+                Priority
+                <select id="previewPriority">
+                  <option>Low</option>
+                  <option>Medium</option>
+                  <option>High</option>
+                  <option>Urgent</option>
+                </select>
+              </label>
+
+              <label>
+                Owner
+                <input id="previewOwner" type="text" placeholder="e.g. Noam, Harel, Team, Unassigned" />
+              </label>
+
+              <label>
+                Source
+                <select id="previewSourceType">
+                  <option>Message</option>
+                  <option>Email</option>
+                  <option>Calendar Invite</option>
+                  <option>Reminder</option>
+                  <option>Conversation</option>
+                  <option>Other</option>
+                </select>
+              </label>
+
+              <label>
+                Estimated duration, minutes
+                <input id="previewDuration" type="number" min="5" step="5" />
+              </label>
+
+              <label class="full-width">
+                Notes
+                <textarea id="previewNotes" rows="3"></textarea>
+              </label>
+
+              <label class="full-width">
+                Missing information
+                <textarea id="previewMissingInfo" rows="3" placeholder="One item per line"></textarea>
+              </label>
+
+              <label class="full-width">
+                Suggested next action
+                <textarea id="previewSuggestedAction" rows="2"></textarea>
+              </label>
+
+              <label class="full-width">
+                Priority reason
+                <textarea id="previewPriorityReason" rows="2"></textarea>
+              </label>
+
+              <div class="form-actions full-width">
+                <button class="primary-btn" type="submit">Save Task</button>
+                <button id="cancelPreviewBtn" class="secondary-btn" type="button">Cancel</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <!-- Tasks: board and ownership share the screen as tabs instead of
+           always rendering both at once. -->
+      <section id="tasksScreen" class="screen" data-screen="tasks">
+        <div class="tabs-bar">
+          <button class="tab-btn" type="button" data-tab="board">Task Board</button>
+          <button class="tab-btn" type="button" data-tab="ownership">Shared Ownership</button>
+        </div>
+
+        <div id="tasksBoardTab" class="tab-panel">
+          <section class="panel tasks-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Task Board</p>
+                <h2>Saved tasks</h2>
+                <p class="muted">
+                  Your extracted tasks, sorted by urgency and actionability.
+                </p>
+              </div>
+              <button id="clearTasksBtn" class="ghost-btn" type="button">Clear Tasks</button>
+            </div>
+
+            <div id="tasksList" class="tasks-list empty-state">
+              No tasks saved yet.
+            </div>
+          </section>
+        </div>
+
+        <div id="ownershipTab" class="tab-panel">
+          <section class="panel ownership-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Shared Ownership</p>
+                <h2>Who owns what?</h2>
+                <p class="muted">
+                  See what is open, stuck, overdue or still unassigned.
+                </p>
+              </div>
+            </div>
+
+            <div id="ownershipBoard" class="ownership-board empty-state">
+              No ownership data yet.
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- Calendar: agenda view of open tasks grouped by due date, with a
+           per-task .ics export (reuses the same export used on the Tasks screen). -->
+      <section id="calendarScreen" class="screen" data-screen="calendar">
+        <section class="panel calendar-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Agenda</p>
+              <h2>What's coming up</h2>
+              <p class="muted">
+                Open tasks grouped by due date. Export any of them to your calendar.
+              </p>
+            </div>
+          </div>
+
+          <div id="calendarAgenda" class="calendar-agenda empty-state">
+            No open tasks to schedule yet.
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button type="button" data-nav-target="overview" title="Overview">⌂</button>
+      <button type="button" data-nav-target="tasks" title="Tasks">☑</button>
+      <button type="button" class="nav-main" data-nav-target="capture" title="Create">＋</button>
+      <button type="button" data-nav-target="calendar" title="Calendar">◷</button>
+    </nav>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
