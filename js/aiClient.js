@@ -1,10 +1,8 @@
-export async function analyzeTaskWithAI({ copiedText, sourceHint, userProfile, corrections }) {
+export async function analyzeTaskWithAI({ sourceText, sourceType, profile }) {
   const payload = {
-    copiedText,
-    sourceHint: sourceHint || null,
-    userProfile: buildCompactProfile(userProfile, corrections),
-    currentDateTime: new Date().toISOString(),
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    sourceText,
+    sourceType: sourceType || null,
+    relevantContext: buildRelevantContext(profile)
   };
 
   let response;
@@ -26,62 +24,63 @@ export async function analyzeTaskWithAI({ copiedText, sourceHint, userProfile, c
   }
 
   if (!response.ok) {
-    throw new Error(data?.error || "TaskWise could not organize this task right now. Please try again or add it manually.");
+    throw new Error(
+      data?.error || "TaskWise could not organize this task right now. Please try again or add it manually."
+    );
   }
 
-  return data; // { task: ApiTask }
+  return data; // { result: AiResult }
 }
 
-// ── Build compact profile for AI (only non-empty fields) ─────────────
+// ── Build compact relevant context from onboarding profile ────────────
+// Only sends structured arrays of names/labels — no free-form text blocks.
 
-function buildCompactProfile(profile, corrections) {
-  if (!profile) return null;
+function buildRelevantContext(profile) {
+  if (!profile) return {};
 
-  const compact = {};
+  const ctx = {};
 
-  if (profile.displayName) compact.displayName = profile.displayName;
-  if (Array.isArray(profile.lifeAreas) && profile.lifeAreas.length) {
-    compact.lifeAreas = profile.lifeAreas;
-  }
-  if (profile.currentSituation) compact.currentSituation = profile.currentSituation;
+  // Workplaces / industries
+  const workplaces = [];
+  if (profile.workContext?.industry) workplaces.push(profile.workContext.industry);
+  if (workplaces.length) ctx.workplaces = workplaces;
 
-  const wc = profile.workContext;
-  if (wc && (wc.role || wc.industry || wc.commonProjects || wc.knownPeople)) {
-    compact.workContext = {};
-    if (wc.role) compact.workContext.role = wc.role;
-    if (wc.industry) compact.workContext.industry = wc.industry;
-    if (wc.commonProjects) compact.workContext.commonProjects = wc.commonProjects;
-    if (wc.knownPeople) compact.workContext.knownPeople = wc.knownPeople;
+  // Universities
+  if (profile.studyContext?.institution) {
+    ctx.universities = [profile.studyContext.institution];
   }
 
-  const sc = profile.studyContext;
-  if (sc && (sc.studyType || sc.field || sc.institution || sc.commonProjects)) {
-    compact.studyContext = {};
-    if (sc.studyType) compact.studyContext.studyType = sc.studyType;
-    if (sc.field) compact.studyContext.field = sc.field;
-    if (sc.institution) compact.studyContext.institution = sc.institution;
-    if (sc.commonProjects) compact.studyContext.commonProjects = sc.commonProjects;
+  // Courses / fields of study
+  const courses = [];
+  if (profile.studyContext?.field) courses.push(profile.studyContext.field);
+  if (profile.studyContext?.commonProjects) {
+    splitList(profile.studyContext.commonProjects).forEach(c => courses.push(c));
+  }
+  if (courses.length) ctx.courses = courses.slice(0, 5);
+
+  // Known people (from work context)
+  if (profile.workContext?.knownPeople) {
+    const people = splitList(profile.workContext.knownPeople).slice(0, 10);
+    if (people.length) ctx.knownPeople = people;
   }
 
-  const fc = profile.familyContext;
-  if (fc && Array.isArray(fc.responsibilities) && fc.responsibilities.length) {
-    compact.familyContext = { responsibilities: fc.responsibilities };
+  // Known projects / clients
+  if (profile.workContext?.commonProjects) {
+    const projects = splitList(profile.workContext.commonProjects).slice(0, 5);
+    if (projects.length) ctx.knownProjects = projects;
   }
 
-  if (Array.isArray(profile.commonTaskTypes) && profile.commonTaskTypes.length) {
-    compact.commonTaskTypes = profile.commonTaskTypes;
+  // Family responsibilities
+  if (profile.familyContext?.responsibilities?.length) {
+    ctx.familyResponsibilities = profile.familyContext.responsibilities.slice(0, 5);
   }
 
-  if (Array.isArray(corrections) && corrections.length) {
-    compact.recentClassificationCorrections = corrections.slice(-5).map(c => ({
-      aiCategory: c.aiCategory,
-      finalCategory: c.finalCategory,
-      aiPriority: c.aiPriority,
-      finalPriority: c.finalPriority,
-      aiOwner: c.aiOwner,
-      finalOwner: c.finalOwner
-    }));
-  }
+  return ctx;
+}
 
-  return compact;
+function splitList(str) {
+  return String(str || "")
+    .split(/[,;،\n]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
 }

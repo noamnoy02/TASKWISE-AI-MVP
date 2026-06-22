@@ -1,147 +1,119 @@
 const OPENAI_API_URL = "https://api.openai.com/v1/responses";
 const MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const MAX_INPUT_CHARS = 4000;
-const MAX_OUTPUT_TOKENS = 600;
+const MAX_OUTPUT_TOKENS = 700;
 
-// ── Server-side system prompt (never sent to browser) ─────────────────
+// ── Server-side system prompt ─────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are the task-understanding engine for TaskWise.
+const SYSTEM_PROMPT = `You are the task-understanding engine of a smart task-management application.
 
-TaskWise helps users reduce mental overload by converting unstructured messages, emails, invitations, reminders, and notes into clear, structured, and actionable tasks.
+Convert unstructured messages, emails, reminders, invitations, and notes into one structured task.
 
-You will receive:
+Your goal is to understand what the user actually needs to do and turn it into a clear next action.
 
-1. Text copied by the user.
-2. The source of the text, when known.
-3. A concise onboarding profile describing the user's work, studies, family or household responsibilities, recurring projects, known clients, known people, and common task types.
-4. The current date, time, and timezone.
-5. A small number of previous user classification corrections, when available.
+Return valid JSON only. Do not return Markdown, explanations, comments, or text outside the JSON object.
 
-Your job is to analyze the copied text and return exactly one structured task.
+### Task title
 
-The model performs semantic extraction and suggestions only.
+Generate a new, clear, natural, polished, and action-oriented task title that would look good in a task-management app.
 
-The model does not rank the task against the user's other tasks and does not decide the final execution order.
+Do not copy the complete original message as the title unless the source is already a short action-oriented task.
 
-Final prioritization, overdue calculation, dashboard ordering, and recommended next action are calculated deterministically by the TaskWise application after the user approves the task.
+The title should:
 
-TASK TITLE:
+* Use the same language as the source
+* Begin with an action verb whenever possible
+* Usually contain 3-10 words
+* Describe the actual next action
+* Preserve important names, objects, project names, course names, and identifiers
+* Remove greetings, politeness, and conversational filler
+* Avoid vague titles such as "Handle this," "Reminder," "Meeting," or "Do task"
 
-- Create a short, clear, action-oriented title.
-- Start with an action verb when appropriate.
-- Remove unnecessary conversational wording.
-- Preserve important names, project names, clients, and subjects.
-- Do not create more than one task.
-
-CATEGORY:
-
-Classify the task into exactly one category:
-
-- Work
-- Studies
-- Family
-- Home
-- Personal
-- Health
-- Finance
-- Other
-
-Use both the copied text and relevant onboarding context.
-
-Do not classify based only on isolated keywords.
+Remove phrases such as: Hi, Please, Can you, Could you, Don't forget, Just a reminder, Thanks, היי, בבקשה, תוכלי, תוכל, אל תשכחי, תזכורת
 
 Examples:
+"Hi, can you send Dana the updated presentation before tomorrow?" → "Send Dana the updated presentation"
+"Reminder: electricity bill due on 14 July" → "Pay the electricity bill"
+"צריך להעלות את העבודה למודל עד יום ראשון" → "להעלות את העבודה למודל"
 
-- A known client or work project may support Work classification.
-- A known university course or academic project may support Studies classification.
-- Household logistics may belong to Home.
-- Responsibilities involving children, a partner, or relatives may belong to Family.
-- Medical appointments or health-related actions may belong to Health.
-- Bills, payments, banking, and financial obligations may belong to Finance.
+### Main action
 
-Use onboarding information only as supporting context.
+Identify the primary responsibility the user needs to perform. Ignore greetings, signatures, previous quoted messages, marketing content, legal disclaimers, and background conversation.
 
-Do not invent relationships, projects, or facts that were not supplied.
+If several actions exist, create one task representing the main responsibility. Keep useful secondary actions in notes.
 
-DEADLINE:
+If no clear action exists: return isActionable: false, return an empty title, do not invent a task.
 
-- Extract an explicit deadline when present.
-- Resolve relative dates using the supplied current date and timezone.
-- Return an ISO date in YYYY-MM-DD format.
-- If the text says "Thursday," calculate the appropriate upcoming Thursday based on the current date.
-- If no deadline is stated or safely inferable, return an empty string "".
-- Never invent a deadline.
+### Category
 
-OWNER:
+Choose a category according to the meaning of the task and relevant onboarding context.
 
-- Extract the owner only when ownership is explicit or reasonably clear.
-- If the message is clearly a request directed at the current user, owner may be "Me".
-- A person mentioned as a client, recipient, child, lecturer, or stakeholder is not automatically the owner.
-- If another person is explicitly assigned to perform the task, use that person's name.
-- If ownership is unclear, return an empty string "".
-- Add "Owner" to missingInformation when ownership would be useful.
-- Never invent an owner.
+Allowed categories: Work, Studies, Family, Personal, Home, Finance, Health, Errands
 
-PRIORITY:
+Use onboarding context when available:
+* Known employer, workplace, colleague, client, or work project → Work
+* Known university, degree, lecturer, course, assignment, Moodle, or academic project → Studies
+* Known family member, child, partner, parent, kindergarten, or school responsibility → Family
+* Bill, payment, tax, reimbursement, or banking task → Finance
+* Appointment, doctor, prescription, or medical follow-up → Health
+* Household cleaning, repair, grocery, or home maintenance task → Home
+* Pickup, delivery, shopping, or location-based errand → Errands
+* Personal administration that does not fit another category → Personal
 
-Suggest one semantic priority: Low, Medium, High, or Urgent.
+If category confidence is below 0.60: return category as empty string "", add "Select a category" to missingInformation.
 
-Base the suggestion only on information available in the copied text, explicit urgency, deadline proximity, consequences of delay, and whether the deadline is already passed based on the supplied date.
+Return categoryConfidence as a number between 0 and 1.
 
-Priority definitions:
+Do not use Other. Do not return null for category — use empty string "" when unclear.
 
-Urgent: Immediate attention is required, the task is overdue with meaningful consequences, the message explicitly states urgency, or the deadline is extremely close.
+### Deadline
 
-High: The task is important and should be handled soon because of its deadline or consequences.
+Extract the deadline exactly as expressed in the source. Return the original phrase in deadlineText.
 
-Medium: The task matters but can be scheduled normally.
+Do not calculate the final calendar date — application code will resolve it. Do not invent a time. If no deadline exists, return empty string "".
 
-Low: The task is flexible, optional, or has no near deadline or significant consequences.
+### Urgency signals
 
-Return a short, user-facing priorityReason.
+Return explicit urgency or importance signals only when supported by the source: urgent, ASAP, immediately, today, final deadline, blocks a meeting, blocks a submission, payment consequence, customer waiting, דחוף, בהקדם, חייב היום.
 
-ESTIMATED DURATION:
+Do not infer urgency from punctuation alone. Return as array of short strings.
 
-- Extract duration only when it is explicitly stated.
-- Do not invent a duration.
-- Return 0 when unknown.
-- Add "Estimated duration" to missingInformation when duration would help with scheduling.
+### Owner
 
-SOURCE:
+Return "Me" when the user is expected to perform the task, the person's name when another person is clearly responsible, or empty string "" when unclear. Never invent an owner.
 
-- Use the supplied sourceHint when available.
-- If no sourceHint is provided, return "Other".
-- Do not guess the source based on writing style.
+### People and context
 
-NOTES:
+Extract relevant people, projects, courses, clients, organizations, and locations. Use onboarding context when it provides a reliable match. Do not invent people, relationships, or projects.
 
-- Keep notes concise.
-- Include useful context that does not belong in the task title.
-- Do not duplicate the full original text.
+### Notes
 
-MISSING INFORMATION:
+Use notes for concise supporting information: amounts, meeting context, required document contents, secondary actions, dependencies, morning/evening when no exact time is given. Do not repeat the title.
 
-List only useful missing information that may be needed to complete, assign, or schedule the task.
+### Missing information
 
-Possible values include: Owner, Deadline, Estimated duration, Source, Project, Location.
+Include only information that materially affects completing or scheduling the task: Select a category, Deadline is unclear, Owner is unclear, Missing location, Missing document name. Do not list every optional field.
 
-Do not mark every optional field as missing.
+### Required JSON
 
-CONFIDENCE:
+Return exactly this structure with no additional properties:
 
-Return a number between 0 and 1 reflecting how strongly the copied text and supplied profile support the proposed structured fields.
+{
+  "isActionable": true,
+  "title": "",
+  "category": "",
+  "categoryConfidence": 0,
+  "deadlineText": "",
+  "owner": "",
+  "people": [],
+  "project": "",
+  "location": "",
+  "urgencySignals": [],
+  "notes": "",
+  "missingInformation": []
+}
 
-GENERAL RULES:
-
-- Never invent facts.
-- Return exactly one task.
-- Do not perform the task.
-- Do not save anything.
-- Do not calculate the final task order.
-- Do not compare the task with other tasks.
-- Return only data matching the required structured schema.
-- The result is an editable suggestion.
-- The user must approve or correct it before saving.`;
+Rules: use empty string "" for unknown optional scalar values, use empty arrays when no array values exist, never return undefined or null, do not add additional properties, return JSON only.`;
 
 // ── Handler ───────────────────────────────────────────────────────────
 
@@ -157,17 +129,15 @@ exports.handler = async function handler(event) {
     return jsonResponse(400, { error: "Invalid JSON body." });
   }
 
-  const copiedText = String(body.copiedText || "").trim();
-  const sourceHint = body.sourceHint ? String(body.sourceHint).trim() : null;
-  const userProfile = body.userProfile || null;
-  const currentDateTime = String(body.currentDateTime || new Date().toISOString());
-  const timezone = String(body.timezone || "UTC");
+  const sourceText = String(body.sourceText || "").trim();
+  const sourceType = body.sourceType ? String(body.sourceType).trim() : "";
+  const relevantContext = body.relevantContext || {};
 
-  if (!copiedText) {
+  if (!sourceText) {
     return jsonResponse(400, { error: "Paste a message, email, invitation, or reminder first." });
   }
 
-  if (copiedText.length > MAX_INPUT_CHARS) {
+  if (sourceText.length > MAX_INPUT_CHARS) {
     return jsonResponse(400, {
       error: "This text is too long. Please paste only the part that contains the task."
     });
@@ -179,7 +149,7 @@ exports.handler = async function handler(event) {
     });
   }
 
-  const userMessage = buildUserMessage({ copiedText, sourceHint, userProfile, currentDateTime, timezone });
+  const userMessage = buildUserMessage({ sourceText, sourceType, relevantContext });
 
   let openaiResponse;
   try {
@@ -196,37 +166,32 @@ exports.handler = async function handler(event) {
         text: {
           format: {
             type: "json_schema",
-            name: "structured_task",
+            name: "task_extraction",
             strict: true,
             schema: {
               type: "object",
               additionalProperties: false,
               properties: {
+                isActionable: { type: "boolean" },
                 title: { type: "string" },
                 category: {
                   type: "string",
-                  enum: ["Work", "Studies", "Family", "Home", "Personal", "Health", "Finance", "Other"]
+                  enum: ["Work", "Studies", "Family", "Personal", "Home", "Finance", "Health", "Errands", ""]
                 },
-                deadline: { type: "string" },
-                priority: {
-                  type: "string",
-                  enum: ["Low", "Medium", "High", "Urgent"]
-                },
-                priorityReason: { type: "string" },
+                categoryConfidence: { type: "number" },
+                deadlineText: { type: "string" },
                 owner: { type: "string" },
-                estimatedDurationMinutes: { type: "number" },
-                source: {
-                  type: "string",
-                  enum: ["WhatsApp", "Gmail", "Outlook", "Calendar", "Notes", "Manual", "Other"]
-                },
+                people: { type: "array", items: { type: "string" } },
+                project: { type: "string" },
+                location: { type: "string" },
+                urgencySignals: { type: "array", items: { type: "string" } },
                 notes: { type: "string" },
-                missingInformation: { type: "array", items: { type: "string" } },
-                confidence: { type: "number" }
+                missingInformation: { type: "array", items: { type: "string" } }
               },
               required: [
-                "title", "category", "deadline", "priority", "priorityReason",
-                "owner", "estimatedDurationMinutes", "source", "notes",
-                "missingInformation", "confidence"
+                "isActionable", "title", "category", "categoryConfidence",
+                "deadlineText", "owner", "people", "project", "location",
+                "urgencySignals", "notes", "missingInformation"
               ]
             }
           }
@@ -235,7 +200,7 @@ exports.handler = async function handler(event) {
         max_output_tokens: MAX_OUTPUT_TOKENS
       })
     });
-  } catch (networkError) {
+  } catch {
     return jsonResponse(503, {
       error: "TaskWise could not organize this task right now. Please try again or add it manually."
     });
@@ -251,9 +216,8 @@ exports.handler = async function handler(event) {
   }
 
   if (!openaiResponse.ok) {
-    const status = openaiResponse.status;
-    console.error("OpenAI error", status, JSON.stringify(data?.error || data));
-    if (status === 429) {
+    console.error("OpenAI error", openaiResponse.status, JSON.stringify(data?.error || data));
+    if (openaiResponse.status === 429) {
       return jsonResponse(503, {
         error: "AI task creation is temporarily unavailable. You can still add the task manually."
       });
@@ -270,169 +234,95 @@ exports.handler = async function handler(event) {
     });
   }
 
-  let parsedTask;
+  let parsed;
   try {
-    parsedTask = JSON.parse(outputText);
+    parsed = JSON.parse(outputText);
   } catch {
     return jsonResponse(503, {
       error: "TaskWise could not organize this task right now. Please try again or add it manually."
     });
   }
 
-  return jsonResponse(200, {
-    task: sanitizeTask(parsedTask, sourceHint)
-  });
+  return jsonResponse(200, { result: sanitizeResult(parsed, sourceType) });
 };
 
-// ── User message builder ──────────────────────────────────────────────
+// ── User message ──────────────────────────────────────────────────────
 
-function buildUserMessage({ copiedText, sourceHint, userProfile, currentDateTime, timezone }) {
-  const profileText = formatProfileContext(userProfile);
-  return `Current date and time: ${currentDateTime}
-Timezone: ${timezone}
-Source of the text: ${sourceHint || "Not specified"}
+function buildUserMessage({ sourceText, sourceType, relevantContext }) {
+  const ctx = serializeContext(relevantContext);
+  return `Analyze the following source and convert it into one structured task.
 
-User profile context:
-${profileText}
+Relevant user context:
+${ctx}
 
-Text to analyze:
-${copiedText}`;
+Source type:
+${sourceType || "Not specified"}
+
+<source_text>
+${sourceText}
+</source_text>`;
 }
 
-// ── Profile context formatter ─────────────────────────────────────────
-
-function formatProfileContext(profile) {
-  if (!profile) return "No profile available.";
-
+function serializeContext(ctx) {
+  if (!ctx || !Object.keys(ctx).length) return "No context available.";
   const lines = [];
-
-  if (profile.displayName) lines.push(`User: ${profile.displayName}`);
-  if (Array.isArray(profile.lifeAreas) && profile.lifeAreas.length) {
-    lines.push(`Life areas: ${profile.lifeAreas.join(", ")}`);
-  }
-  if (profile.currentSituation) lines.push(`Current situation: ${profile.currentSituation}`);
-
-  const wc = profile.workContext;
-  if (wc) {
-    if (wc.role) lines.push(`Work role: ${wc.role}`);
-    if (wc.industry) lines.push(`Industry: ${wc.industry}`);
-    if (wc.commonProjects) lines.push(`Work projects/clients: ${wc.commonProjects}`);
-    if (wc.knownPeople) lines.push(`Known work contacts: ${wc.knownPeople}`);
-  }
-
-  const sc = profile.studyContext;
-  if (sc) {
-    if (sc.studyType) lines.push(`Study type: ${sc.studyType}`);
-    if (sc.field) lines.push(`Field of study: ${sc.field}`);
-    if (sc.institution) lines.push(`Institution: ${sc.institution}`);
-    if (sc.commonProjects) lines.push(`Study projects/courses: ${sc.commonProjects}`);
-  }
-
-  const fc = profile.familyContext;
-  if (fc && Array.isArray(fc.responsibilities) && fc.responsibilities.length) {
-    lines.push(`Family/home responsibilities: ${fc.responsibilities.join(", ")}`);
-  }
-
-  if (Array.isArray(profile.commonTaskTypes) && profile.commonTaskTypes.length) {
-    lines.push(`Common task types: ${profile.commonTaskTypes.join(", ")}`);
-  }
-
-  const corrections = profile.recentClassificationCorrections;
-  if (Array.isArray(corrections) && corrections.length) {
-    lines.push("\nRecent classification corrections (user preferences):");
-    for (const c of corrections) {
-      const parts = [];
-      if (c.aiCategory && c.finalCategory && c.aiCategory !== c.finalCategory) {
-        parts.push(`category: ${c.aiCategory} → ${c.finalCategory}`);
-      }
-      if (c.aiPriority && c.finalPriority && c.aiPriority !== c.finalPriority) {
-        parts.push(`priority: ${c.aiPriority} → ${c.finalPriority}`);
-      }
-      if (c.aiOwner !== undefined && c.finalOwner !== undefined && c.aiOwner !== c.finalOwner) {
-        parts.push(`owner: ${c.aiOwner || "none"} → ${c.finalOwner || "none"}`);
-      }
-      if (parts.length) lines.push(`  - ${parts.join(", ")}`);
-    }
-  }
-
-  return lines.length ? lines.join("\n") : "Minimal profile — onboarding may not have been completed.";
+  if (ctx.workplaces?.length) lines.push(`Workplaces/industries: ${ctx.workplaces.join(", ")}`);
+  if (ctx.universities?.length) lines.push(`Universities: ${ctx.universities.join(", ")}`);
+  if (ctx.courses?.length) lines.push(`Courses/fields: ${ctx.courses.join(", ")}`);
+  if (ctx.knownPeople?.length) lines.push(`Known people: ${ctx.knownPeople.join(", ")}`);
+  if (ctx.knownProjects?.length) lines.push(`Known projects/clients: ${ctx.knownProjects.join(", ")}`);
+  if (ctx.familyResponsibilities?.length) lines.push(`Family responsibilities: ${ctx.familyResponsibilities.join(", ")}`);
+  return lines.length ? lines.join("\n") : "No relevant context available.";
 }
 
-// ── Response parsing ──────────────────────────────────────────────────
+// ── Response extraction ───────────────────────────────────────────────
 
 function extractOutputText(data) {
   if (typeof data.output_text === "string") return data.output_text;
-
   if (!Array.isArray(data.output)) return "";
-
   const parts = [];
   for (const item of data.output) {
     if (!Array.isArray(item.content)) continue;
-    for (const content of item.content) {
-      if (content.type === "output_text" && typeof content.text === "string") {
-        parts.push(content.text);
-      }
+    for (const c of item.content) {
+      if (c.type === "output_text" && typeof c.text === "string") parts.push(c.text);
     }
   }
   return parts.join("").trim();
 }
 
-// ── Sanitize / validate task from OpenAI ─────────────────────────────
+// ── Sanitize AI result ────────────────────────────────────────────────
 
-function sanitizeTask(task, sourceHint) {
-  const CATEGORIES = ["Work", "Studies", "Family", "Home", "Personal", "Health", "Finance", "Other"];
-  const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
-  const SOURCES = ["WhatsApp", "Gmail", "Outlook", "Calendar", "Notes", "Manual", "Other"];
+const ALLOWED_CATEGORIES = ["Work", "Studies", "Family", "Personal", "Home", "Finance", "Health", "Errands"];
 
-  const deadline = safeString(task.deadline, "");
-  const isIso = /^\d{4}-\d{2}-\d{2}$/.test(deadline);
+function sanitizeResult(r, sourceType) {
+  const category = ALLOWED_CATEGORIES.includes(r.category) ? r.category : "";
+  const categoryConfidence = typeof r.categoryConfidence === "number"
+    ? Math.min(Math.max(r.categoryConfidence, 0), 1) : 0;
 
   return {
-    title: safeString(task.title, "New task"),
-    category: safeEnum(task.category, CATEGORIES, "Other"),
-    deadline: isIso ? deadline : "",
-    priority: safeEnum(task.priority, PRIORITIES, "Medium"),
-    priorityReason: safeString(task.priorityReason, ""),
-    owner: safeString(task.owner, ""),
-    estimatedDurationMinutes: safeDuration(task.estimatedDurationMinutes),
-    source: safeEnum(task.source, SOURCES, sourceHint && SOURCES.includes(sourceHint) ? sourceHint : "Other"),
-    notes: safeString(task.notes, ""),
-    missingInformation: Array.isArray(task.missingInformation)
-      ? task.missingInformation.map(String).filter(Boolean)
-      : [],
-    confidence: typeof task.confidence === "number" ? clamp(task.confidence, 0, 1) : 0.7
+    isActionable: r.isActionable !== false,
+    title: safeStr(r.title),
+    category,
+    categoryConfidence: category ? categoryConfidence : 0,
+    deadlineText: safeStr(r.deadlineText),
+    owner: safeStr(r.owner),
+    people: safeArray(r.people),
+    project: safeStr(r.project),
+    location: safeStr(r.location),
+    urgencySignals: safeArray(r.urgencySignals),
+    notes: safeStr(r.notes),
+    missingInformation: safeArray(r.missingInformation),
+    sourceType: safeStr(sourceType)
   };
 }
 
-// ── Utilities ─────────────────────────────────────────────────────────
-
-function safeString(value, fallback) {
-  const text = String(value == null ? "" : value).trim();
-  return text || fallback;
-}
-
-function safeEnum(value, allowed, fallback) {
-  const text = String(value == null ? "" : value).trim();
-  return allowed.includes(text) ? text : fallback;
-}
-
-function safeDuration(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n) || n < 0) return 0;
-  return Math.min(Math.round(n), 480);
-}
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
+function safeStr(v) { return typeof v === "string" ? v.trim() : ""; }
+function safeArray(v) { return Array.isArray(v) ? v.map(String).filter(Boolean) : []; }
 
 function jsonResponse(statusCode, body) {
   return {
     statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*"
-    },
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
     body: JSON.stringify(body)
   };
 }

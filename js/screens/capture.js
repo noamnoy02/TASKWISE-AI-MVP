@@ -1,5 +1,8 @@
 import { getProfile, getCorrections, addCorrection, getTasks, saveTasks } from "../storage.js";
-import { uuid, normalizePriority, normalizeCategory, normalizeSourceType } from "../taskUtils.js";
+import {
+  uuid, normalizePriority, normalizeCategory, normalizeSourceType,
+  resolveDeadline, calculatePriority
+} from "../taskUtils.js";
 import { analyzeTaskWithAI } from "../aiClient.js";
 import { onProfileChange } from "./onboarding.js";
 import { getActiveScreen } from "../nav.js";
@@ -22,11 +25,16 @@ const els = {
   aiSourceBadge: document.getElementById("aiSourceBadge"),
   previewForm: document.getElementById("previewForm"),
   previewTitle: document.getElementById("previewTitle"),
+  previewTitleWarning: document.getElementById("previewTitleWarning"),
   previewCategory: document.getElementById("previewCategory"),
+  previewCategoryHint: document.getElementById("previewCategoryHint"),
   previewDeadlineText: document.getElementById("previewDeadlineText"),
   previewDueDate: document.getElementById("previewDueDate"),
   previewPriority: document.getElementById("previewPriority"),
   previewOwner: document.getElementById("previewOwner"),
+  previewPeople: document.getElementById("previewPeople"),
+  previewProject: document.getElementById("previewProject"),
+  previewLocation: document.getElementById("previewLocation"),
   previewSourceType: document.getElementById("previewSourceType"),
   previewDuration: document.getElementById("previewDuration"),
   previewNotes: document.getElementById("previewNotes"),
@@ -47,50 +55,29 @@ function setLoading(on) {
   isSubmitting = on;
   els.createTaskBtn.disabled = on;
   els.loadingState.classList.toggle("hidden", !on);
-  if (on) {
-    clearError();
-    clearInfo();
-  }
+  if (on) { clearError(); clearInfo(); }
 }
 
-function showError(msg, showRetry = false) {
-  if (showRetry) {
+function showError(msg, withRetry = false) {
+  if (withRetry) {
     const retryText = els.sourceTextInput.value.trim();
-    els.errorState.innerHTML = `
-      <span>${escapeHtml(msg)}</span>
-      <button class="ghost-btn small-btn-inline" type="button" id="retryAiBtn">Try again</button>
-    `;
-    const retryBtn = document.getElementById("retryAiBtn");
-    if (retryBtn && retryText) {
-      retryBtn.addEventListener("click", () => runAiExtraction(retryText));
-    }
+    els.errorState.innerHTML =
+      `<span>${escHtml(msg)}</span>` +
+      (retryText
+        ? ` <button class="ghost-btn small-btn-inline" type="button" id="retryAiBtn">Try again</button>`
+        : "");
+    document.getElementById("retryAiBtn")?.addEventListener("click", () => runAiExtraction(retryText));
   } else {
     els.errorState.textContent = msg;
   }
   els.errorState.classList.remove("hidden");
 }
 
-function clearError() {
-  els.errorState.innerHTML = "";
-  els.errorState.classList.add("hidden");
-}
-
-function showInfo(msg) {
-  els.infoState.textContent = msg;
-  els.infoState.classList.remove("hidden");
-}
-
-function clearInfo() {
-  els.infoState.textContent = "";
-  els.infoState.classList.add("hidden");
-}
-
-function escapeHtml(value) {
-  return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+function clearError() { els.errorState.innerHTML = ""; els.errorState.classList.add("hidden"); }
+function showInfo(msg) { els.infoState.textContent = msg; els.infoState.classList.remove("hidden"); }
+function clearInfo() { els.infoState.textContent = ""; els.infoState.classList.add("hidden"); }
+function escHtml(v) {
+  return String(v || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
 }
 
 // ── Step visibility ───────────────────────────────────────────────────
@@ -99,7 +86,6 @@ function showCaptureStep() {
   els.captureStep.classList.remove("hidden");
   els.previewStep.classList.add("hidden");
 }
-
 function showPreviewStep() {
   els.captureStep.classList.add("hidden");
   els.previewStep.classList.remove("hidden");
@@ -109,18 +95,13 @@ function showPreviewStep() {
 
 function setSelectedSource(source) {
   selectedSourceHint = source;
-  if (!els.sourceChips) return;
-  els.sourceChips.querySelectorAll("button.source-chip").forEach(btn => {
+  els.sourceChips?.querySelectorAll("button.source-chip").forEach(btn => {
     btn.classList.toggle("selected", btn.dataset.source === source);
   });
 }
-
 function clearSourceSelection() {
   selectedSourceHint = null;
-  if (!els.sourceChips) return;
-  els.sourceChips.querySelectorAll("button.source-chip").forEach(btn => {
-    btn.classList.remove("selected");
-  });
+  els.sourceChips?.querySelectorAll("button.source-chip").forEach(btn => btn.classList.remove("selected"));
 }
 
 // ── Context status pill ───────────────────────────────────────────────
@@ -128,88 +109,118 @@ function clearSourceSelection() {
 export function updateContextStatus() {
   const profile = getProfile();
   els.contextStatus.classList.remove("good", "warning");
-
   if (!profile) {
     els.contextStatus.textContent = "No context yet";
     els.contextStatus.classList.add("warning");
     return;
   }
-
   const signals = [
-    profile.work,
-    profile.studies,
-    profile.workContext?.role,
-    profile.workContext?.industry,
-    profile.workContext?.commonProjects,
-    profile.studyContext?.field,
-    ...(profile.lifeAreas || []),
-    ...(profile.people || []),
-    ...(profile.projects || []),
-    ...(profile.commonTaskTypes || [])
+    profile.workContext?.role, profile.workContext?.industry, profile.workContext?.commonProjects,
+    profile.studyContext?.field, profile.studyContext?.institution,
+    ...(profile.lifeAreas || []), ...(profile.commonTaskTypes || [])
   ].filter(Boolean);
-
   els.contextStatus.textContent = `${signals.length} context signals`;
   els.contextStatus.classList.add("good");
 }
 
-// ── Map AI response (new schema) to app task model ────────────────────
+// ── Title validation (deterministic, no extra AI call) ────────────────
 
-function mapAiResultToTask(apiTask, sourceHint, originalText) {
-  const deadline = apiTask.deadline || "";
-  const isIsoDate = /^\d{4}-\d{2}-\d{2}$/.test(deadline);
+function validateTitle(title, sourceText) {
+  if (!title) return null;
+  const words = title.trim().split(/\s+/);
+  if (words.length > 15) return "review_long";
 
-  let deadlineText = "";
-  if (isIsoDate) {
-    try {
-      const d = new Date(`${deadline}T12:00:00`);
-      deadlineText = d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-    } catch {
-      deadlineText = deadline;
-    }
+  // Flag if title is nearly identical to a long conversational source
+  if (sourceText && sourceText.length > 120) {
+    const norm = s => s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "").replace(/\s+/g, " ").trim();
+    const nt = norm(title);
+    const ns = norm(sourceText);
+    if (ns.length && nt.length / ns.length > 0.75) return "review_copied";
   }
+  return null;
+}
 
-  const resolvedSource = apiTask.source && apiTask.source !== "Other"
-    ? apiTask.source
-    : (sourceHint || "Other");
+// ── Map AI result → internal task object ─────────────────────────────
+
+function mapAiResult(aiResult, sourceType, originalText) {
+  const deadlineText = aiResult.deadlineText || null;
+  const resolvedDate = resolveDeadline(deadlineText);
+  const priority = calculatePriority(resolvedDate, aiResult.urgencySignals);
+
+  const rawCategory = aiResult.category || "";           // "" means AI was unsure
+  const category = rawCategory ? (normalizeCategory(rawCategory) || "Other") : null;
+  const titleWarning = validateTitle(aiResult.title, originalText);
 
   return {
-    title: apiTask.title || "New task",
-    category: normalizeCategory(apiTask.category),
+    // Core task fields
+    title: aiResult.title || "",
+    category,
+    categoryConfidence: rawCategory ? (aiResult.categoryConfidence || 0) : 0,
     deadlineText,
-    dueDate: isIsoDate ? deadline : "",
-    priority: normalizePriority(apiTask.priority),
-    priorityReason: apiTask.priorityReason || "",
-    owner: apiTask.owner || "Unassigned",
-    sourceType: normalizeSourceType(resolvedSource),
-    durationMinutes: Number(apiTask.estimatedDurationMinutes) || 0,
-    notes: apiTask.notes || "",
-    missingInfo: Array.isArray(apiTask.missingInformation) ? apiTask.missingInformation : [],
+    dueDate: resolvedDate || "",
+    priority,
+    owner: aiResult.owner || "Unassigned",
+    people: aiResult.people || [],
+    project: aiResult.project || null,
+    location: aiResult.location || null,
+    sourceType: normalizeSourceType(sourceType || "Other"),
+    urgencySignals: aiResult.urgencySignals || [],
+    notes: aiResult.notes || "",
+    missingInfo: aiResult.missingInformation || [],
     suggestedAction: "",
-    confidence: apiTask.confidence,
+    priorityReason: "",
     originalText,
-    // Store AI suggestions for correction tracking
-    aiSuggestedCategory: apiTask.category,
-    aiSuggestedPriority: apiTask.priority,
-    aiSuggestedOwner: apiTask.owner || ""
+    isActionable: aiResult.isActionable !== false,
+    titleWarning,
+    // Metadata for correction tracking
+    aiSuggestedCategory: rawCategory || null,
+    aiSuggestedOwner: aiResult.owner || "",
+    aiGenerated: true
   };
 }
 
-// ── Fill / read preview form ──────────────────────────────────────────
+// ── Fill preview form ─────────────────────────────────────────────────
 
 function fillPreview(task, badgeLabel, badgeClass) {
   currentPreviewTask = task;
 
   els.previewTitle.value = task.title || "";
-  els.previewCategory.value = normalizeCategory(task.category);
+
+  // Title warning
+  if (els.previewTitleWarning) {
+    const warn = task.titleWarning;
+    els.previewTitleWarning.textContent =
+      warn === "review_copied" ? "The title looks similar to the original text — consider shortening it."
+      : warn === "review_long" ? "The title is quite long — consider making it more concise."
+      : "";
+    els.previewTitleWarning.classList.toggle("hidden", !warn);
+  }
+
+  // Category — null means AI was unsure
+  const cat = task.category;
+  if (els.previewCategory) {
+    els.previewCategory.value = cat || "";
+  }
+  if (els.previewCategoryHint) {
+    const showHint = !cat;
+    els.previewCategoryHint.textContent = showHint ? "Select a category" : "";
+    els.previewCategoryHint.classList.toggle("hidden", !showHint);
+  }
+
   els.previewDeadlineText.value = task.deadlineText || "";
   els.previewDueDate.value = task.dueDate || "";
   els.previewPriority.value = normalizePriority(task.priority);
   els.previewOwner.value = task.owner || "";
 
+  if (els.previewPeople) {
+    els.previewPeople.value = Array.isArray(task.people) ? task.people.join(", ") : (task.people || "");
+  }
+  if (els.previewProject) els.previewProject.value = task.project || "";
+  if (els.previewLocation) els.previewLocation.value = task.location || "";
+
   const srcNorm = normalizeSourceType(task.sourceType);
-  const srcEl = els.previewSourceType;
-  const srcOption = Array.from(srcEl.options).find(o => o.value === srcNorm);
-  srcEl.value = srcOption ? srcNorm : "Other";
+  const srcOption = Array.from(els.previewSourceType.options).find(o => o.value === srcNorm);
+  els.previewSourceType.value = srcOption ? srcNorm : "Other";
 
   els.previewDuration.value = task.durationMinutes || "";
   els.previewNotes.value = task.notes || "";
@@ -226,17 +237,22 @@ function fillPreview(task, badgeLabel, badgeClass) {
 }
 
 function readPreviewTask() {
-  const missingInfo = els.previewMissingInfo.value
-    .split("\n").map(s => s.trim()).filter(Boolean);
+  const missingInfo = els.previewMissingInfo.value.split("\n").map(s => s.trim()).filter(Boolean);
+  const people = els.previewPeople
+    ? els.previewPeople.value.split(",").map(s => s.trim()).filter(Boolean)
+    : (currentPreviewTask?.people || []);
 
   return {
     id: currentPreviewTask?.id || uuid(),
     title: els.previewTitle.value.trim(),
-    category: els.previewCategory.value,
+    category: els.previewCategory.value || null,
     deadlineText: els.previewDeadlineText.value.trim(),
     dueDate: els.previewDueDate.value,
     priority: els.previewPriority.value,
     owner: els.previewOwner.value.trim() || "Unassigned",
+    people,
+    project: els.previewProject?.value.trim() || currentPreviewTask?.project || null,
+    location: els.previewLocation?.value.trim() || currentPreviewTask?.location || null,
     sourceType: els.previewSourceType.value,
     durationMinutes: Number(els.previewDuration.value || 0),
     notes: els.previewNotes.value.trim(),
@@ -244,12 +260,12 @@ function readPreviewTask() {
     suggestedAction: els.previewSuggestedAction.value.trim(),
     priorityReason: els.previewPriorityReason.value.trim(),
     originalText: currentPreviewTask?.originalText || "",
-    confidence: currentPreviewTask?.confidence,
+    urgencySignals: currentPreviewTask?.urgencySignals || [],
+    categoryConfidence: currentPreviewTask?.categoryConfidence,
     aiSuggestedCategory: currentPreviewTask?.aiSuggestedCategory,
-    aiSuggestedPriority: currentPreviewTask?.aiSuggestedPriority,
     aiSuggestedOwner: currentPreviewTask?.aiSuggestedOwner,
     status: currentPreviewTask?.status || "Open",
-    aiGenerated: currentPreviewTask?.aiGenerated ?? true,
+    aiGenerated: currentPreviewTask?.aiGenerated ?? false,
     createdAt: currentPreviewTask?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -258,23 +274,19 @@ function readPreviewTask() {
 // ── Correction tracking ───────────────────────────────────────────────
 
 function recordCorrectionIfNeeded(finalTask) {
-  const original = currentPreviewTask;
-  if (!original || !original.aiGenerated) return;
+  const orig = currentPreviewTask;
+  if (!orig?.aiGenerated) return;
 
-  const categoryChanged = original.aiSuggestedCategory &&
-    normalizeCategory(original.aiSuggestedCategory) !== finalTask.category;
-  const priorityChanged = original.aiSuggestedPriority &&
-    normalizePriority(original.aiSuggestedPriority) !== finalTask.priority;
-  const ownerChanged = original.aiSuggestedOwner !== undefined &&
-    (original.aiSuggestedOwner || "Unassigned") !== finalTask.owner;
+  const catChanged = orig.aiSuggestedCategory &&
+    (normalizeCategory(orig.aiSuggestedCategory) || "Other") !== (finalTask.category || "Other");
+  const ownerChanged = orig.aiSuggestedOwner !== undefined &&
+    (orig.aiSuggestedOwner || "Unassigned") !== finalTask.owner;
 
-  if (categoryChanged || priorityChanged || ownerChanged) {
+  if (catChanged || ownerChanged) {
     addCorrection({
-      aiCategory: original.aiSuggestedCategory || "",
-      finalCategory: finalTask.category,
-      aiPriority: original.aiSuggestedPriority || "",
-      finalPriority: finalTask.priority,
-      aiOwner: original.aiSuggestedOwner || "",
+      aiCategory: orig.aiSuggestedCategory || "",
+      finalCategory: finalTask.category || "",
+      aiOwner: orig.aiSuggestedOwner || "",
       finalOwner: finalTask.owner
     });
   }
@@ -284,90 +296,75 @@ function recordCorrectionIfNeeded(finalTask) {
 
 async function runAiExtraction(text) {
   if (isSubmitting) return;
+  clearError(); clearInfo();
 
-  clearError();
-  clearInfo();
-
-  if (!text) {
-    showError("Paste a message, email, invitation, or reminder first.");
-    return;
-  }
-
+  if (!text) { showError("Paste a message, email, invitation, or reminder first."); return; }
   if (text.length > MAX_INPUT_CHARS) {
-    showError("This text is too long. Please paste only the part that contains the task.");
-    return;
+    showError("This text is too long. Please paste only the part that contains the task."); return;
   }
 
   setLoading(true);
-
   try {
     const data = await analyzeTaskWithAI({
-      copiedText: text,
-      sourceHint: selectedSourceHint,
-      userProfile: getProfile(),
-      corrections: getCorrections()
+      sourceText: text,
+      sourceType: selectedSourceHint,
+      profile: getProfile()
     });
 
-    const mappedTask = mapAiResultToTask(data.task, selectedSourceHint, text);
-    mappedTask.aiGenerated = true;
+    const aiResult = data.result;
 
-    fillPreview(mappedTask, "AI result", "ai");
+    if (!aiResult.isActionable) {
+      showInfo("The pasted text doesn't appear to contain an actionable task. Try a different message, or add the task manually.");
+      return;
+    }
+
+    const task = mapAiResult(aiResult, selectedSourceHint, text);
+    fillPreview(task, "AI result", "ai");
   } catch (err) {
-    showError(err.message || "TaskWise could not organize this task right now. Please try again or add it manually.", true);
+    showError(
+      err.message || "TaskWise could not organize this task right now. Please try again or add it manually.",
+      true
+    );
   } finally {
     setLoading(false);
   }
 }
 
-// ── Save handler ──────────────────────────────────────────────────────
+// ── Save ──────────────────────────────────────────────────────────────
 
 function handleSaveTask(event) {
   event.preventDefault();
-
   const task = readPreviewTask();
-  if (!task.title) {
-    showError("Task name is required.");
-    return;
-  }
+  if (!task.title) { showError("Task name is required."); return; }
 
   recordCorrectionIfNeeded(task);
 
   const tasks = getTasks();
   const idx = tasks.findIndex(t => t.id === task.id);
-
-  if (idx >= 0) {
-    tasks[idx] = task;
-  } else {
-    tasks.push(task);
-  }
-
+  if (idx >= 0) tasks[idx] = task; else tasks.push(task);
   saveTasks(tasks);
+
   currentPreviewTask = null;
   els.sourceTextInput.value = "";
-  clearError();
-  clearInfo();
-  clearSourceSelection();
+  clearError(); clearInfo(); clearSourceSelection();
   showCaptureStep();
-
   if (onTaskSaved) onTaskSaved();
 }
 
 // ── Public API ────────────────────────────────────────────────────────
 
 export function startCapture(text) {
-  clearError();
-  clearInfo();
-  showCaptureStep();
+  clearError(); clearInfo(); showCaptureStep();
   els.sourceTextInput.value = text;
   if (text.trim()) runAiExtraction(text.trim());
 }
 
 export function openManualCapture() {
-  clearError();
-  clearInfo();
+  clearError(); clearInfo();
   currentPreviewTask = {
-    title: "", category: "Other", deadlineText: "", dueDate: "",
+    title: "", category: null, deadlineText: "", dueDate: "",
     priority: "Medium", owner: "Me", sourceType: "Manual",
+    people: [], project: null, location: null,
     durationMinutes: 0, notes: "", missingInfo: [], suggestedAction: "",
     priorityReason: "", originalText: "", aiGenerated: false
   };
@@ -375,24 +372,16 @@ export function openManualCapture() {
 }
 
 export function openTaskForEdit(task) {
-  clearError();
-  clearInfo();
-  currentPreviewTask = task;
+  clearError(); clearInfo();
+  currentPreviewTask = { ...task, missingInfo: task.missingInfo || [], people: task.people || [] };
   els.sourceTextInput.value = task.originalText || "";
-  fillPreview(
-    { ...task, missingInfo: task.missingInfo || [] },
-    task.aiGenerated ? "AI result" : "Manual entry",
-    task.aiGenerated ? "ai" : ""
-  );
+  fillPreview(currentPreviewTask, task.aiGenerated ? "AI result" : "Manual entry", task.aiGenerated ? "ai" : "");
 }
 
 export function resetCaptureScreen() {
-  currentPreviewTask = null;
-  isSubmitting = false;
+  currentPreviewTask = null; isSubmitting = false;
   els.sourceTextInput.value = "";
-  clearError();
-  clearInfo();
-  clearSourceSelection();
+  clearError(); clearInfo(); clearSourceSelection();
   showCaptureStep();
 }
 
@@ -401,30 +390,21 @@ export function resetCaptureScreen() {
 export function initCaptureScreen(options = {}) {
   onTaskSaved = options.onTaskSaved || null;
 
-  // Source chip selection
-  if (els.sourceChips) {
-    els.sourceChips.addEventListener("click", e => {
-      const chip = e.target.closest("button.source-chip");
-      if (!chip) return;
-      const source = chip.dataset.source;
-      if (selectedSourceHint === source) {
-        clearSourceSelection();
-      } else {
-        setSelectedSource(source);
-      }
-    });
-  }
+  els.sourceChips?.addEventListener("click", e => {
+    const chip = e.target.closest("button.source-chip");
+    if (!chip) return;
+    const src = chip.dataset.source;
+    if (selectedSourceHint === src) clearSourceSelection(); else setSelectedSource(src);
+  });
 
   els.createTaskBtn.addEventListener("click", () => {
     if (!isSubmitting) runAiExtraction(els.sourceTextInput.value.trim());
   });
 
-  els.addManualTaskBtn.addEventListener("click", () => {
-    openManualCapture();
-  });
+  els.addManualTaskBtn.addEventListener("click", openManualCapture);
 
   els.loadExampleBtn.addEventListener("click", () => {
-    els.sourceTextInput.value = "Send the final report to Harel for survey X by Thursday. It's urgent because the client is waiting, and if anything is missing check with Dani.";
+    els.sourceTextInput.value = "Hi, can you send Maya the updated project plan before our meeting tomorrow at 14:00? Thanks!";
   });
 
   els.previewForm.addEventListener("submit", handleSaveTask);
@@ -434,12 +414,8 @@ export function initCaptureScreen(options = {}) {
     showCaptureStep();
   });
 
-  document.addEventListener("keydown", event => {
-    if (
-      event.key === "Escape" &&
-      getActiveScreen() === "capture" &&
-      !els.previewStep.classList.contains("hidden")
-    ) {
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && getActiveScreen() === "capture" && !els.previewStep.classList.contains("hidden")) {
       currentPreviewTask = null;
       showCaptureStep();
     }

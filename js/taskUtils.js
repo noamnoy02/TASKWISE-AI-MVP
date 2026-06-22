@@ -1,4 +1,4 @@
-export const CATEGORIES = ["Work", "Studies", "Family", "Personal", "Home", "Finance", "Health", "Other"];
+export const CATEGORIES = ["Work", "Studies", "Family", "Personal", "Home", "Finance", "Health", "Errands", "Other"];
 export const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
 export const SOURCE_TYPES = [
   "WhatsApp", "Gmail", "Outlook", "Calendar", "Notes", "Manual",
@@ -22,7 +22,7 @@ export function normalizePriority(priority) {
 }
 
 export function normalizeCategory(category) {
-  if (!category) return "Other";
+  if (!category) return null;
   const match = CATEGORIES.find(c => c.toLowerCase() === String(category).toLowerCase());
   return match || "Other";
 }
@@ -85,6 +85,114 @@ export function buildLocalPriorityReason(task) {
   if (task.owner === "Unassigned") reasons.push("ownership is still unclear");
   if (!reasons.length) reasons.push("it has the best balance of priority and timing");
   return `Recommended because ${reasons.join(", ")}.`;
+}
+
+// ── Deterministic deadline resolution ────────────────────────────────
+// Resolves natural-language deadline phrases to ISO YYYY-MM-DD.
+// Returns null when the phrase cannot be reliably resolved.
+
+export function resolveDeadline(deadlineText) {
+  if (!deadlineText || typeof deadlineText !== "string") return null;
+  const text = deadlineText.trim();
+  if (!text) return null;
+
+  const lower = text.toLowerCase();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const iso = d => d.toISOString().slice(0, 10);
+  const shift = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
+
+  // Today / היום
+  if (/\btoday\b|\bהיום\b/.test(lower)) return iso(today);
+
+  // Tomorrow / מחר
+  if (/\btomorrow\b|\bמחר\b/.test(lower)) return iso(shift(today, 1));
+
+  // Named weekdays — next occurrence
+  const WEEKDAYS = [
+    /\bsunday\b|\bיום ראשון\b|\bראשון\b/,   // 0
+    /\bmonday\b|\bיום שני\b|\bשני\b/,        // 1
+    /\btuesday\b|\bיום שלישי\b|\bשלישי\b/,  // 2
+    /\bwednesday\b|\bיום רביעי\b|\bרביעי\b/, // 3
+    /\bthursday\b|\bיום חמישי\b|\bחמישי\b/, // 4
+    /\bfriday\b|\bיום שישי\b|\bשישי\b/,     // 5
+    /\bsaturday\b|\bשבת\b/                   // 6
+  ];
+  for (let i = 0; i < WEEKDAYS.length; i++) {
+    if (WEEKDAYS[i].test(lower)) {
+      let diff = i - today.getDay();
+      if (diff <= 0) diff += 7;
+      return iso(shift(today, diff));
+    }
+  }
+
+  // Next week / שבוע הבא
+  if (/next week|שבוע הבא/.test(lower)) return iso(shift(today, 7));
+
+  // End of the week / סוף השבוע → Friday
+  if (/end of (the )?week|סוף (ה)?שבוע/.test(lower)) {
+    let diff = 5 - today.getDay();
+    if (diff <= 0) diff += 7;
+    return iso(shift(today, diff));
+  }
+
+  // Bare ISO date YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+
+  // DD/MM or DD.MM (without year)
+  const dmMatch = text.match(/(\d{1,2})[/.](\d{1,2})(?!\d)/);
+  if (dmMatch) {
+    const d = new Date(today.getFullYear(), parseInt(dmMatch[2]) - 1, parseInt(dmMatch[1]));
+    if (d < today) d.setFullYear(d.getFullYear() + 1);
+    if (!isNaN(d.getTime())) return iso(d);
+  }
+
+  // "14 July" / "July 14"
+  const MONTHS = {
+    january:0, february:1, march:2, april:3, may:4, june:5,
+    july:6, august:7, september:8, october:9, november:10, december:11,
+    jan:0, feb:1, mar:2, apr:3, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11
+  };
+  for (const [name, month] of Object.entries(MONTHS)) {
+    if (lower.includes(name)) {
+      const dayMatch = lower.match(/(\d{1,2})/);
+      if (dayMatch) {
+        const d = new Date(today.getFullYear(), month, parseInt(dayMatch[1]));
+        if (d < today) d.setFullYear(d.getFullYear() + 1);
+        if (!isNaN(d.getTime())) return iso(d);
+      }
+    }
+  }
+
+  return null;
+}
+
+// ── Deterministic priority calculation ────────────────────────────────
+// AI supplies urgencySignals; code decides the final priority.
+// Rules:
+//   Urgent : overdue OR within 24 h OR explicit urgency signal
+//   High   : 1–3 days away
+//   Medium : 3–14 days away OR no date + no urgency
+//   Low    : (not assigned automatically — requires explicit "low" signal)
+
+export function calculatePriority(resolvedDueDate, urgencySignals) {
+  const hasUrgency = Array.isArray(urgencySignals) && urgencySignals.length > 0;
+
+  if (resolvedDueDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(resolvedDueDate + "T00:00:00");
+    const diffDays = Math.ceil((due - today) / 86400000);
+
+    if (diffDays <= 0) return "Urgent";
+    if (diffDays <= 1 || hasUrgency) return "Urgent";
+    if (diffDays <= 3) return "High";
+    if (diffDays <= 14) return "Medium";
+    return "Medium";
+  }
+
+  return hasUrgency ? "Urgent" : "Medium";
 }
 
 export function escapeHtml(value) {

@@ -374,10 +374,12 @@
               <label class="full-width">
                 Task name
                 <input id="previewTitle" type="text" required />
+                <span id="previewTitleWarning" class="field-hint hidden"></span>
               </label>
               <label>
                 Category
                 <select id="previewCategory">
+                  <option value="">— Select a category —</option>
                   <option>Work</option>
                   <option>Studies</option>
                   <option>Family</option>
@@ -385,8 +387,10 @@
                   <option>Home</option>
                   <option>Finance</option>
                   <option>Health</option>
+                  <option>Errands</option>
                   <option>Other</option>
                 </select>
+                <span id="previewCategoryHint" class="field-hint hidden">Select a category</span>
               </label>
               <label>
                 Priority
@@ -408,6 +412,18 @@
               <label>
                 Owner
                 <input id="previewOwner" type="text" placeholder="e.g. Me, Harel, Unassigned" />
+              </label>
+              <label class="full-width">
+                People involved
+                <input id="previewPeople" type="text" placeholder="e.g. Maya, Ron (comma-separated)" />
+              </label>
+              <label>
+                Project / context
+                <input id="previewProject" type="text" placeholder="e.g. Survey X, Final assignment" />
+              </label>
+              <label>
+                Location
+                <input id="previewLocation" type="text" placeholder="e.g. Office, Kindergarten" />
               </label>
               <label>
                 Source
