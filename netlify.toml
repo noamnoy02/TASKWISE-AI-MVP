@@ -7,6 +7,7 @@
   functions = "netlify/functions"
   port = 8888
 
+
 [[redirects]]
   from = "/api/ai"
   to = "/.netlify/functions/ai"
