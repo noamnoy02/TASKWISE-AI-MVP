@@ -1,92 +1,107 @@
 import { getUser, getProfile, saveProfile } from "../storage.js";
 import { uuid } from "../taskUtils.js";
 
-// ── Pub/sub for profile changes (used by capture.js context status) ──
+// ── Pub/sub for profile changes ───────────────────────────────────────
 const profileChangeListeners = [];
-export function onProfileChange(listener) {
-  profileChangeListeners.push(listener);
-}
-function notifyProfileChange() {
-  profileChangeListeners.forEach(fn => fn());
-}
+export function onProfileChange(listener) { profileChangeListeners.push(listener); }
+function notifyProfileChange() { profileChangeListeners.forEach(fn => fn()); }
 
-// ── DOM refs ──────────────────────────────────────────────────────────
-const progressFill = document.getElementById("progressFill");
-const progressText = document.getElementById("progressText");
-
-const steps = {
-  1: document.getElementById("obStep1"),
-  2: document.getElementById("obStep2"),
-  3: document.getElementById("obStep3"),
-  4: document.getElementById("obStep4"),
-  5: document.getElementById("obStep5"),
-  6: document.getElementById("obStep6"),
-  7: document.getElementById("obStep7"),
-  8: document.getElementById("obStep8")
+// ── Step identifiers ──────────────────────────────────────────────────
+const STEP_IDS = {
+  intro:   "ob-intro",
+  areas:   "ob-areas",
+  context: "ob-context",
+  tasks:   "ob-tasks",
+  done:    "ob-done"
+};
+const STEP_ORDER = ["intro", "areas", "context", "tasks", "done"];
+// Progress counts only content steps (1–4)
+const PROGRESS_STEPS = ["areas", "context", "tasks", "done"];
+const AREA_TO_SECTION = {
+  Work:     "ctx-work",
+  Studies:  "ctx-studies",
+  Family:   "ctx-family",
+  Home:     "ctx-home",
+  Personal: "ctx-personal",
+  Health:   "ctx-health",
+  Finances: "ctx-finances"
 };
 
 // ── State ─────────────────────────────────────────────────────────────
-let currentStep = 1;
+let currentStep = "intro";
 let onComplete = null;
 
 const data = {
   lifeAreas: [],
-  currentSituation: null,
-  workContext: { industry: null, role: null, commonProjects: null, knownPeople: null },
-  studyContext: { studyType: null, field: null, institution: null, commonProjects: null },
-  familyContext: { responsibilities: [] },
-  commonTaskTypes: []
+  workContext: emptyWorkCtx(),
+  studyContext: emptyStudyCtx(),
+  familyContext: emptyFamilyCtx(),
+  homeContext: emptyRespCtx(),
+  personalContext: emptyRespCtx(),
+  healthContext: emptyRespCtx(),
+  financeContext: emptyRespCtx(),
+  commonTaskTypes: [],
+  commonTaskTypesCustom: []
 };
 
-// ── Step sequence logic ───────────────────────────────────────────────
-
-function getApplicableSteps() {
-  const list = [1, 2, 3];
-  if (data.lifeAreas.includes("Work")) list.push(4);
-  if (data.lifeAreas.includes("Studies")) list.push(5);
-  if (data.lifeAreas.includes("Family") || data.lifeAreas.includes("Home")) list.push(6);
-  list.push(7, 8);
-  return list;
+function emptyWorkCtx() {
+  return { industry: null, industryCustom: null, role: null, roleCustom: null, workplace: null, workplaceCustom: null, projectsOrPeople: [] };
+}
+function emptyStudyCtx() {
+  return { institutionType: null, institutionTypeCustom: null, institution: null, institutionCustom: null, degreeLevel: null, degreeLevelCustom: null, fieldOfStudy: null, fieldOfStudyCustom: null, coursesOrPeople: [] };
+}
+function emptyFamilyCtx() {
+  return { responsibilities: [], responsibilitiesCustom: [], people: [] };
+}
+function emptyRespCtx() {
+  return { responsibilities: [], responsibilitiesCustom: [] };
 }
 
-function getNextStep(current) {
-  const list = getApplicableSteps();
-  const idx = list.indexOf(current);
-  return idx >= 0 && idx < list.length - 1 ? list[idx + 1] : null;
-}
+// ── DOM helpers ───────────────────────────────────────────────────────
+function el(id) { return document.getElementById(id); }
+function show(id) { el(id)?.classList.remove("hidden"); }
+function hide(id) { el(id)?.classList.add("hidden"); }
+function getVal(id) { return el(id)?.value?.trim() || ""; }
+function setVal(id, v) { const e = el(id); if (e) e.value = v ?? ""; }
+function setSelVal(id, v) { const e = el(id); if (e) e.value = v ?? ""; }
 
-function getPrevStep(current) {
-  const list = getApplicableSteps();
-  const idx = list.indexOf(current);
-  return idx > 0 ? list[idx - 1] : null;
-}
-
-// ── Progress bar ──────────────────────────────────────────────────────
+// ── Progress ──────────────────────────────────────────────────────────
 
 function updateProgress(step) {
-  const list = getApplicableSteps();
-  const idx = list.indexOf(step);
-  const total = list.length;
-  const pct = Math.round(((idx + 1) / total) * 100);
-  progressFill.style.width = `${pct}%`;
-  progressText.textContent = `Step ${idx + 1} of ${total}`;
+  const isIntro = step === "intro";
+  const bar = el("obProgressBar");
+  if (bar) bar.classList.toggle("hidden", isIntro);
+
+  const idx = PROGRESS_STEPS.indexOf(step);
+  if (idx < 0) return;
+  const pct = Math.round(((idx + 1) / PROGRESS_STEPS.length) * 100);
+  const fill = el("progressFill");
+  const text = el("progressText");
+  if (fill) fill.style.width = `${pct}%`;
+  if (text) text.textContent = `Step ${idx + 1} of ${PROGRESS_STEPS.length}`;
 }
 
-// ── Chip selection helpers ────────────────────────────────────────────
+// ── Navigation ────────────────────────────────────────────────────────
 
-function getChipValues(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return [];
-  const isMulti = container.dataset.multi === "true";
-  if (isMulti) {
-    return Array.from(container.querySelectorAll(".chip.selected")).map(b => b.dataset.value);
-  }
-  const sel = container.querySelector(".chip.selected");
-  return sel ? [sel.dataset.value] : [];
+function goToStep(step) {
+  Object.values(STEP_IDS).forEach(divId => el(divId)?.classList.add("hidden"));
+  el(STEP_IDS[step])?.classList.remove("hidden");
+  currentStep = step;
+  updateProgress(step);
+  window.scrollTo(0, 0);
 }
 
-function initChipGroup(containerId) {
-  const container = document.getElementById(containerId);
+function goBack() {
+  const idx = STEP_ORDER.indexOf(currentStep);
+  if (idx > 0) goToStep(STEP_ORDER[idx - 1]);
+}
+
+// ── Chip group initializer ────────────────────────────────────────────
+// Handles both multi-select and single-select chip groups.
+// If otherWrapId is provided, chips with data-triggers-other="true" toggle that wrap.
+
+function initChipGroup(containerId, otherWrapId = null, otherInputId = null) {
+  const container = el(containerId);
   if (!container) return;
   const isMulti = container.dataset.multi === "true";
 
@@ -98,78 +113,289 @@ function initChipGroup(containerId) {
         container.querySelectorAll(".chip").forEach(c => c.classList.remove("selected"));
         chip.classList.add("selected");
       }
+
+      if (chip.dataset.triggersOther === "true" && otherWrapId) {
+        const isOn = chip.classList.contains("selected");
+        el(otherWrapId)?.classList.toggle("hidden", !isOn);
+        if (!isOn && otherInputId) setVal(otherInputId, "");
+      }
     });
   });
 }
 
-// ── Step navigation ───────────────────────────────────────────────────
+// ── "Other" wiring for datalist inputs ───────────────────────────────
+// When the input value is exactly "Other", shows the custom field below.
 
-function goToStep(step) {
-  // Hide all steps
-  Object.values(steps).forEach(el => el.classList.add("hidden"));
-  steps[step].classList.remove("hidden");
-  currentStep = step;
-  updateProgress(step);
-  window.scrollTo(0, 0);
+function wireOtherInput(inputId, wrapId, customId) {
+  const input = el(inputId);
+  const wrap = el(wrapId);
+  if (!input || !wrap) return;
+
+  function check() {
+    const isOther = input.value.trim() === "Other";
+    wrap.classList.toggle("hidden", !isOther);
+    if (!isOther) setVal(customId, "");
+  }
+  input.addEventListener("input", check);
+  input.addEventListener("change", check);
 }
 
-function advance() {
-  // Collect data before moving forward
-  if (currentStep === 2) {
-    const selected = getChipValues("lifeAreasChips");
-    const err = document.getElementById("lifeAreasError");
-    if (!selected.length) {
-      err.classList.remove("hidden");
-      return;
+// ── "Other" wiring for <select> elements ─────────────────────────────
+
+function wireOtherSelect(selectId, wrapId, customId) {
+  const select = el(selectId);
+  const wrap = el(wrapId);
+  if (!select || !wrap) return;
+
+  function check() {
+    const isOther = select.value === "Other";
+    wrap.classList.toggle("hidden", !isOther);
+    if (!isOther) setVal(customId, "");
+  }
+  select.addEventListener("change", check);
+}
+
+// ── Chip value helpers ────────────────────────────────────────────────
+
+function getChipValues(containerId) {
+  const container = el(containerId);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll(".chip.selected")).map(b => b.dataset.value);
+}
+
+function restoreChipGroup(containerId, selectedValues) {
+  const container = el(containerId);
+  if (!container) return;
+  container.querySelectorAll(".chip").forEach(c => {
+    c.classList.toggle("selected", selectedValues.includes(c.dataset.value));
+  });
+}
+
+// ── Context sections: show/hide based on life areas ───────────────────
+
+function showContextSections() {
+  Object.values(AREA_TO_SECTION).forEach(id => hide(id));
+  data.lifeAreas.forEach(area => {
+    if (AREA_TO_SECTION[area]) show(AREA_TO_SECTION[area]);
+  });
+}
+
+// ── Task type chips: filter by life areas ─────────────────────────────
+
+function filterTaskTypeChips() {
+  document.querySelectorAll("#taskTypesChips .task-chip").forEach(chip => {
+    const areas = (chip.dataset.areas || "").split(",").map(s => s.trim());
+    const isUniversal = areas.includes("*");
+    const isRelevant = isUniversal || areas.some(a => data.lifeAreas.includes(a));
+    chip.classList.toggle("hidden", !isRelevant);
+    if (!isRelevant) chip.classList.remove("selected");
+  });
+}
+
+// ── Data collection ───────────────────────────────────────────────────
+
+function splitList(str) {
+  return String(str || "").split(/[,;،\n]+/).map(s => s.trim()).filter(Boolean);
+}
+
+function effectiveInputVal(inputId, customId) {
+  const val = getVal(inputId);
+  return val === "Other" ? getVal(customId) || null : val || null;
+}
+
+function effectiveSelectVal(selectId, customId) {
+  const val = getVal(selectId);
+  return val === "Other" ? getVal(customId) || null : val || null;
+}
+
+function getOtherChipCustom(chipGroupId, otherInputId) {
+  const container = el(chipGroupId);
+  const otherChip = container?.querySelector('.chip[data-value="Other"]');
+  if (otherChip?.classList.contains("selected")) {
+    const raw = getVal(otherInputId).trim();
+    return raw ? splitList(raw) : [];
+  }
+  return [];
+}
+
+function collectContextData() {
+  if (data.lifeAreas.includes("Work")) {
+    data.workContext = {
+      industry: getVal("ctxWorkIndustry") || null,
+      industryCustom: getVal("ctxWorkIndustry") === "Other" ? getVal("ctxWorkIndustryCustom") || null : null,
+      role: getVal("ctxWorkRole") || null,
+      roleCustom: getVal("ctxWorkRole") === "Other" ? getVal("ctxWorkRoleCustom") || null : null,
+      workplace: getVal("ctxWorkplace") || null,
+      workplaceCustom: getVal("ctxWorkplace") === "Other" ? getVal("ctxWorkplaceCustom") || null : null,
+      projectsOrPeople: splitList(getVal("ctxWorkProjects"))
+    };
+  }
+
+  if (data.lifeAreas.includes("Studies")) {
+    const instType = getVal("ctxStudyInstType");
+    const degree = getVal("ctxStudyDegree");
+    data.studyContext = {
+      institutionType: instType || null,
+      institutionTypeCustom: instType === "Other" ? getVal("ctxStudyInstTypeCustom") || null : null,
+      institution: getVal("ctxStudyInstitution") || null,
+      institutionCustom: getVal("ctxStudyInstitution") === "Other" ? getVal("ctxStudyInstitutionCustom") || null : null,
+      degreeLevel: degree || null,
+      degreeLevelCustom: degree === "Other" ? getVal("ctxStudyDegreeCustom") || null : null,
+      fieldOfStudy: getVal("ctxStudyField") || null,
+      fieldOfStudyCustom: getVal("ctxStudyField") === "Other" ? getVal("ctxStudyFieldCustom") || null : null,
+      coursesOrPeople: splitList(getVal("ctxStudyCourses"))
+    };
+  }
+
+  if (data.lifeAreas.includes("Family")) {
+    data.familyContext = {
+      responsibilities: getChipValues("familyRespChips").filter(v => v !== "Other"),
+      responsibilitiesCustom: getOtherChipCustom("familyRespChips", "familyRespOther"),
+      people: splitList(getVal("ctxFamilyPeople"))
+    };
+  }
+
+  if (data.lifeAreas.includes("Home")) {
+    data.homeContext = {
+      responsibilities: getChipValues("homeRespChips").filter(v => v !== "Other"),
+      responsibilitiesCustom: getOtherChipCustom("homeRespChips", "homeRespOther")
+    };
+  }
+
+  if (data.lifeAreas.includes("Personal")) {
+    data.personalContext = {
+      responsibilities: getChipValues("personalRespChips").filter(v => v !== "Other"),
+      responsibilitiesCustom: getOtherChipCustom("personalRespChips", "personalRespOther")
+    };
+  }
+
+  if (data.lifeAreas.includes("Health")) {
+    data.healthContext = {
+      responsibilities: getChipValues("healthRespChips").filter(v => v !== "Other"),
+      responsibilitiesCustom: getOtherChipCustom("healthRespChips", "healthRespOther")
+    };
+  }
+
+  if (data.lifeAreas.includes("Finances")) {
+    data.financeContext = {
+      responsibilities: getChipValues("financeRespChips").filter(v => v !== "Other"),
+      responsibilitiesCustom: getOtherChipCustom("financeRespChips", "financeRespOther")
+    };
+  }
+}
+
+function collectTaskTypesData() {
+  const selected = getChipValues("taskTypesChips").filter(v => v !== "other");
+  const otherChip = document.querySelector('#taskTypesChips .chip[data-value="other"]');
+  let custom = [];
+  if (otherChip?.classList.contains("selected")) {
+    custom = splitList(getVal("taskTypesOther"));
+  }
+  data.commonTaskTypes = selected;
+  data.commonTaskTypesCustom = custom;
+}
+
+// ── Context step validation ───────────────────────────────────────────
+// If user explicitly selected "Other" in any field, the custom field must be filled.
+
+function validateContextOther() {
+  const err = el("obContextError");
+
+  const datalistPairs = [
+    ["ctxWorkIndustry", "ctxWorkIndustryCustom"],
+    ["ctxWorkRole", "ctxWorkRoleCustom"],
+    ["ctxWorkplace", "ctxWorkplaceCustom"],
+    ["ctxStudyInstitution", "ctxStudyInstitutionCustom"],
+    ["ctxStudyField", "ctxStudyFieldCustom"]
+  ];
+  for (const [inputId, customId] of datalistPairs) {
+    const input = el(inputId);
+    if (input?.value.trim() === "Other") {
+      const custom = el(customId);
+      if (!custom?.value.trim()) {
+        err?.classList.remove("hidden");
+        custom?.focus();
+        return false;
+      }
     }
-    err.classList.add("hidden");
-    data.lifeAreas = selected;
   }
 
-  if (currentStep === 3) {
-    const [val] = getChipValues("situationChips");
-    data.currentSituation = val || null;
+  const selectPairs = [
+    ["ctxStudyInstType", "ctxStudyInstTypeCustom"],
+    ["ctxStudyDegree", "ctxStudyDegreeCustom"]
+  ];
+  for (const [selId, customId] of selectPairs) {
+    const sel = el(selId);
+    if (sel?.value === "Other") {
+      const custom = el(customId);
+      if (!custom?.value.trim()) {
+        err?.classList.remove("hidden");
+        custom?.focus();
+        return false;
+      }
+    }
   }
 
-  if (currentStep === 4) {
-    const [industry] = getChipValues("industryChips");
-    data.workContext.industry = industry || null;
-    data.workContext.role = document.getElementById("workRoleInput").value.trim() || null;
-    const projects = document.getElementById("workProjectsInput").value.trim();
-    // Split combined field into people and projects by comma
-    const parts = projects.split(",").map(s => s.trim()).filter(Boolean);
-    data.workContext.knownPeople = parts.filter(p => /^[A-Za-zא-ת]/.test(p)).join(", ") || null;
-    data.workContext.commonProjects = projects || null;
+  const chipOtherPairs = [
+    ["familyRespChips", "familyRespOther"],
+    ["homeRespChips", "homeRespOther"],
+    ["personalRespChips", "personalRespOther"],
+    ["healthRespChips", "healthRespOther"],
+    ["financeRespChips", "financeRespOther"]
+  ];
+  for (const [groupId, inputId] of chipOtherPairs) {
+    const container = el(groupId);
+    const otherChip = container?.querySelector('.chip[data-value="Other"]');
+    if (otherChip?.classList.contains("selected")) {
+      const custom = el(inputId);
+      if (!custom?.value.trim()) {
+        err?.classList.remove("hidden");
+        custom?.focus();
+        return false;
+      }
+    }
   }
 
-  if (currentStep === 5) {
-    const [studyType] = getChipValues("studyTypeChips");
-    data.studyContext.studyType = studyType || null;
-    data.studyContext.field = document.getElementById("studyFieldInput").value.trim() || null;
-    data.studyContext.institution = document.getElementById("studyInstitutionInput").value.trim() || null;
-    data.studyContext.commonProjects = document.getElementById("studyProjectsInput").value.trim() || null;
-  }
+  err?.classList.add("hidden");
+  return true;
+}
 
-  if (currentStep === 6) {
-    data.familyContext.responsibilities = getChipValues("familyChips");
-  }
+// ── Advance / back ────────────────────────────────────────────────────
 
-  if (currentStep === 7) {
-    data.commonTaskTypes = getChipValues("taskTypesChips");
-  }
-
-  if (currentStep === 8) {
-    finishOnboarding();
+function advance() {
+  if (currentStep === "intro") {
+    goToStep("areas");
     return;
   }
 
-  const next = getNextStep(currentStep);
-  if (next !== null) goToStep(next);
-}
+  if (currentStep === "areas") {
+    const selected = getChipValues("lifeAreasChips");
+    const errEl = el("lifeAreasError");
+    if (!selected.length) { errEl?.classList.remove("hidden"); return; }
+    errEl?.classList.add("hidden");
+    data.lifeAreas = selected;
+    showContextSections();
+    goToStep("context");
+    return;
+  }
 
-function goBack() {
-  const prev = getPrevStep(currentStep);
-  if (prev !== null) goToStep(prev);
+  if (currentStep === "context") {
+    if (!validateContextOther()) return;
+    collectContextData();
+    filterTaskTypeChips();
+    goToStep("tasks");
+    return;
+  }
+
+  if (currentStep === "tasks") {
+    collectTaskTypesData();
+    goToStep("done");
+    return;
+  }
+
+  if (currentStep === "done") {
+    finishOnboarding();
+  }
 }
 
 // ── Save profile ──────────────────────────────────────────────────────
@@ -183,93 +409,209 @@ function finishOnboarding() {
     username: user?.identifier || "",
     email: user?.isEmail ? user.identifier : "",
     displayName: user?.displayName || user?.identifier || "",
-    lifeAreas: data.lifeAreas,
-    currentSituation: data.currentSituation,
+    lifeAreas: [...data.lifeAreas],
     workContext: { ...data.workContext },
     studyContext: { ...data.studyContext },
-    familyContext: { responsibilities: [...data.familyContext.responsibilities] },
+    familyContext: { ...data.familyContext },
+    homeContext: { ...data.homeContext },
+    personalContext: { ...data.personalContext },
+    healthContext: { ...data.healthContext },
+    financeContext: { ...data.financeContext },
     commonTaskTypes: [...data.commonTaskTypes],
+    commonTaskTypesCustom: [...data.commonTaskTypesCustom],
     onboardingCompleted: true,
     updatedAt: new Date().toISOString()
   };
 
   saveProfile(profile);
   notifyProfileChange();
-
   if (onComplete) onComplete();
 }
 
-// ── Pre-populate when editing an existing profile ─────────────────────
+// ── Migrate old profile to new schema ────────────────────────────────
+// Reads old schema fields and maps them into the new data object.
+
+function migrateOldProfile(p) {
+  data.lifeAreas = p.lifeAreas || [];
+
+  // Work
+  const wc = p.workContext;
+  if (wc) {
+    // Old schema stored projectsOrPeople as separate strings
+    const projects = Array.isArray(wc.projectsOrPeople) && wc.projectsOrPeople.length
+      ? wc.projectsOrPeople
+      : splitList([wc.commonProjects, wc.knownPeople].filter(Boolean).join(", "));
+    data.workContext = {
+      industry: wc.industry || null,
+      industryCustom: wc.industryCustom || null,
+      role: wc.role || null,
+      roleCustom: wc.roleCustom || null,
+      workplace: wc.workplace || null,
+      workplaceCustom: wc.workplaceCustom || null,
+      projectsOrPeople: projects
+    };
+  }
+
+  // Studies — old schema: studyType → institutionType, field → fieldOfStudy
+  const sc = p.studyContext;
+  if (sc) {
+    const instTypeMap = {
+      "Undergraduate degree": "University",
+      "Graduate degree": "University",
+      "Professional course": "Professional Course",
+      "Certification": "Certification Program",
+      "School": "High School"
+    };
+    const courses = Array.isArray(sc.coursesOrPeople) && sc.coursesOrPeople.length
+      ? sc.coursesOrPeople
+      : splitList(sc.commonProjects || "");
+    data.studyContext = {
+      institutionType: sc.institutionType || instTypeMap[sc.studyType] || sc.studyType || null,
+      institutionTypeCustom: sc.institutionTypeCustom || null,
+      institution: sc.institution || null,
+      institutionCustom: sc.institutionCustom || null,
+      degreeLevel: sc.degreeLevel || null,
+      degreeLevelCustom: sc.degreeLevelCustom || null,
+      fieldOfStudy: sc.fieldOfStudy || sc.field || null,
+      fieldOfStudyCustom: sc.fieldOfStudyCustom || null,
+      coursesOrPeople: courses
+    };
+  }
+
+  // Family/Home — old schema stored these under a single familyContext
+  const fc = p.familyContext;
+  if (fc) {
+    data.familyContext = {
+      responsibilities: fc.responsibilities || [],
+      responsibilitiesCustom: fc.responsibilitiesCustom || [],
+      people: fc.people || splitList(fc.members || "")
+    };
+  }
+
+  data.homeContext = p.homeContext || emptyRespCtx();
+  data.personalContext = p.personalContext || emptyRespCtx();
+  data.healthContext = p.healthContext || emptyRespCtx();
+  data.financeContext = p.financeContext || emptyRespCtx();
+
+  data.commonTaskTypes = p.commonTaskTypes || [];
+  data.commonTaskTypesCustom = p.commonTaskTypesCustom || [];
+}
+
+// ── Populate form from saved profile ─────────────────────────────────
 
 function populateFromProfile() {
   const p = getProfile();
   if (!p) return;
 
-  // Life areas
-  data.lifeAreas = p.lifeAreas || [];
-  const laChips = document.getElementById("lifeAreasChips");
-  if (laChips) {
-    laChips.querySelectorAll(".chip").forEach(c => {
-      if (data.lifeAreas.includes(c.dataset.value)) c.classList.add("selected");
-    });
-  }
+  migrateOldProfile(p);
 
-  // Situation
-  data.currentSituation = p.currentSituation || null;
-  const sitChips = document.getElementById("situationChips");
-  if (sitChips && data.currentSituation) {
-    const match = sitChips.querySelector(`.chip[data-value="${CSS.escape(data.currentSituation)}"]`);
-    if (match) match.classList.add("selected");
-  }
+  // Life areas
+  restoreChipGroup("lifeAreasChips", data.lifeAreas);
 
   // Work
-  if (p.workContext) {
-    data.workContext = { ...p.workContext };
-    const indChips = document.getElementById("industryChips");
-    if (indChips && p.workContext.industry) {
-      const match = indChips.querySelector(`.chip[data-value="${CSS.escape(p.workContext.industry)}"]`);
-      if (match) match.classList.add("selected");
-    }
-    const roleEl = document.getElementById("workRoleInput");
-    if (roleEl) roleEl.value = p.workContext.role || "";
-    const projEl = document.getElementById("workProjectsInput");
-    if (projEl) projEl.value = p.workContext.commonProjects || "";
+  setVal("ctxWorkIndustry", data.workContext.industry || "");
+  if (data.workContext.industry === "Other") {
+    show("ctxWorkIndustryCustomWrap");
+    setVal("ctxWorkIndustryCustom", data.workContext.industryCustom || "");
   }
+  setVal("ctxWorkRole", data.workContext.role || "");
+  if (data.workContext.role === "Other") {
+    show("ctxWorkRoleCustomWrap");
+    setVal("ctxWorkRoleCustom", data.workContext.roleCustom || "");
+  }
+  setVal("ctxWorkplace", data.workContext.workplace || "");
+  if (data.workContext.workplace === "Other") {
+    show("ctxWorkplaceCustomWrap");
+    setVal("ctxWorkplaceCustom", data.workContext.workplaceCustom || "");
+  }
+  setVal("ctxWorkProjects", (data.workContext.projectsOrPeople || []).join(", "));
 
-  // Study
-  if (p.studyContext) {
-    data.studyContext = { ...p.studyContext };
-    const stChips = document.getElementById("studyTypeChips");
-    if (stChips && p.studyContext.studyType) {
-      const match = stChips.querySelector(`.chip[data-value="${CSS.escape(p.studyContext.studyType)}"]`);
-      if (match) match.classList.add("selected");
-    }
-    const fieldEl = document.getElementById("studyFieldInput");
-    if (fieldEl) fieldEl.value = p.studyContext.field || "";
-    const instEl = document.getElementById("studyInstitutionInput");
-    if (instEl) instEl.value = p.studyContext.institution || "";
-    const spEl = document.getElementById("studyProjectsInput");
-    if (spEl) spEl.value = p.studyContext.commonProjects || "";
+  // Studies
+  setSelVal("ctxStudyInstType", data.studyContext.institutionType || "");
+  if (data.studyContext.institutionType === "Other") {
+    show("ctxStudyInstTypeCustomWrap");
+    setVal("ctxStudyInstTypeCustom", data.studyContext.institutionTypeCustom || "");
   }
+  setVal("ctxStudyInstitution", data.studyContext.institution || "");
+  if (data.studyContext.institution === "Other") {
+    show("ctxStudyInstitutionCustomWrap");
+    setVal("ctxStudyInstitutionCustom", data.studyContext.institutionCustom || "");
+  }
+  setSelVal("ctxStudyDegree", data.studyContext.degreeLevel || "");
+  if (data.studyContext.degreeLevel === "Other") {
+    show("ctxStudyDegreeCustomWrap");
+    setVal("ctxStudyDegreeCustom", data.studyContext.degreeLevelCustom || "");
+  }
+  setVal("ctxStudyField", data.studyContext.fieldOfStudy || "");
+  if (data.studyContext.fieldOfStudy === "Other") {
+    show("ctxStudyFieldCustomWrap");
+    setVal("ctxStudyFieldCustom", data.studyContext.fieldOfStudyCustom || "");
+  }
+  setVal("ctxStudyCourses", (data.studyContext.coursesOrPeople || []).join(", "));
 
   // Family
-  if (p.familyContext) {
-    data.familyContext.responsibilities = p.familyContext.responsibilities || [];
-    const famChips = document.getElementById("familyChips");
-    if (famChips) {
-      famChips.querySelectorAll(".chip").forEach(c => {
-        if (data.familyContext.responsibilities.includes(c.dataset.value)) c.classList.add("selected");
-      });
-    }
+  restoreChipGroup("familyRespChips", [
+    ...(data.familyContext.responsibilities || []),
+    ...(data.familyContext.responsibilitiesCustom?.length ? ["Other"] : [])
+  ]);
+  if (data.familyContext.responsibilitiesCustom?.length) {
+    show("familyRespOtherWrap");
+    setVal("familyRespOther", data.familyContext.responsibilitiesCustom.join(", "));
+  }
+  setVal("ctxFamilyPeople", (data.familyContext.people || []).join(", "));
+
+  // Home
+  restoreChipGroup("homeRespChips", [
+    ...(data.homeContext.responsibilities || []),
+    ...(data.homeContext.responsibilitiesCustom?.length ? ["Other"] : [])
+  ]);
+  if (data.homeContext.responsibilitiesCustom?.length) {
+    show("homeRespOtherWrap");
+    setVal("homeRespOther", data.homeContext.responsibilitiesCustom.join(", "));
+  }
+
+  // Personal
+  restoreChipGroup("personalRespChips", [
+    ...(data.personalContext.responsibilities || []),
+    ...(data.personalContext.responsibilitiesCustom?.length ? ["Other"] : [])
+  ]);
+  if (data.personalContext.responsibilitiesCustom?.length) {
+    show("personalRespOtherWrap");
+    setVal("personalRespOther", data.personalContext.responsibilitiesCustom.join(", "));
+  }
+
+  // Health
+  restoreChipGroup("healthRespChips", [
+    ...(data.healthContext.responsibilities || []),
+    ...(data.healthContext.responsibilitiesCustom?.length ? ["Other"] : [])
+  ]);
+  if (data.healthContext.responsibilitiesCustom?.length) {
+    show("healthRespOtherWrap");
+    setVal("healthRespOther", data.healthContext.responsibilitiesCustom.join(", "));
+  }
+
+  // Finances
+  restoreChipGroup("financeRespChips", [
+    ...(data.financeContext.responsibilities || []),
+    ...(data.financeContext.responsibilitiesCustom?.length ? ["Other"] : [])
+  ]);
+  if (data.financeContext.responsibilitiesCustom?.length) {
+    show("financeRespOtherWrap");
+    setVal("financeRespOther", data.financeContext.responsibilitiesCustom.join(", "));
   }
 
   // Task types
-  data.commonTaskTypes = p.commonTaskTypes || [];
-  const ttChips = document.getElementById("taskTypesChips");
-  if (ttChips) {
-    ttChips.querySelectorAll(".chip").forEach(c => {
-      if (data.commonTaskTypes.includes(c.dataset.value)) c.classList.add("selected");
+  const ttContainer = el("taskTypesChips");
+  if (ttContainer) {
+    ttContainer.querySelectorAll(".chip").forEach(c => {
+      c.classList.toggle("selected", data.commonTaskTypes.includes(c.dataset.value));
     });
+    if (data.commonTaskTypesCustom?.length) {
+      const otherChip = ttContainer.querySelector('.chip[data-value="other"]');
+      if (otherChip) otherChip.classList.add("selected");
+      show("taskTypesOtherWrap");
+      setVal("taskTypesOther", data.commonTaskTypesCustom.join(", "));
+    }
   }
 }
 
@@ -278,50 +620,52 @@ function populateFromProfile() {
 export function openOnboardingForEdit(callback) {
   if (callback) onComplete = callback;
   populateFromProfile();
-  // Import showScreen lazily to avoid circular dependency
   import("../nav.js").then(({ showScreen }) => showScreen("onboarding"));
 }
 
 export function initOnboardingScreen(options = {}) {
   onComplete = options.onComplete || null;
 
-  // Init all chip groups
-  ["lifeAreasChips", "situationChips", "industryChips",
-    "studyTypeChips", "familyChips", "taskTypesChips"].forEach(initChipGroup);
+  // Life areas chip group (no "Other" chip)
+  initChipGroup("lifeAreasChips");
 
-  // Step-advance buttons
-  document.getElementById("ob1Btn").addEventListener("click", advance);
-  document.getElementById("ob2Btn").addEventListener("click", advance);
-  document.getElementById("ob3Btn").addEventListener("click", advance);
-  document.getElementById("ob4Btn").addEventListener("click", advance);
-  document.getElementById("ob5Btn").addEventListener("click", advance);
-  document.getElementById("ob6Btn").addEventListener("click", advance);
-  document.getElementById("ob7Btn").addEventListener("click", advance);
-  document.getElementById("ob8Btn").addEventListener("click", advance);
+  // Responsibility chip groups — each has an "Other" chip
+  initChipGroup("familyRespChips", "familyRespOtherWrap", "familyRespOther");
+  initChipGroup("homeRespChips", "homeRespOtherWrap", "homeRespOther");
+  initChipGroup("personalRespChips", "personalRespOtherWrap", "personalRespOther");
+  initChipGroup("healthRespChips", "healthRespOtherWrap", "healthRespOther");
+  initChipGroup("financeRespChips", "financeRespOtherWrap", "financeRespOther");
 
-  // Skip buttons (step without saving step data)
-  document.getElementById("ob4SkipBtn").addEventListener("click", () => {
-    const next = getNextStep(currentStep);
-    if (next !== null) goToStep(next);
-  });
-  document.getElementById("ob5SkipBtn").addEventListener("click", () => {
-    const next = getNextStep(currentStep);
-    if (next !== null) goToStep(next);
-  });
-  document.getElementById("ob6SkipBtn").addEventListener("click", () => {
-    const next = getNextStep(currentStep);
-    if (next !== null) goToStep(next);
-  });
-  document.getElementById("ob7SkipBtn").addEventListener("click", () => {
-    const next = getNextStep(currentStep);
-    if (next !== null) goToStep(next);
-  });
+  // Task types chip group — has an "Other" chip
+  initChipGroup("taskTypesChips", "taskTypesOtherWrap", "taskTypesOther");
 
-  // Back buttons (all .ob-back elements)
+  // Wire datalist "Other" detection
+  wireOtherInput("ctxWorkIndustry", "ctxWorkIndustryCustomWrap", "ctxWorkIndustryCustom");
+  wireOtherInput("ctxWorkRole", "ctxWorkRoleCustomWrap", "ctxWorkRoleCustom");
+  wireOtherInput("ctxWorkplace", "ctxWorkplaceCustomWrap", "ctxWorkplaceCustom");
+  wireOtherInput("ctxStudyInstitution", "ctxStudyInstitutionCustomWrap", "ctxStudyInstitutionCustom");
+  wireOtherInput("ctxStudyField", "ctxStudyFieldCustomWrap", "ctxStudyFieldCustom");
+
+  // Wire select "Other" detection
+  wireOtherSelect("ctxStudyInstType", "ctxStudyInstTypeCustomWrap", "ctxStudyInstTypeCustom");
+  wireOtherSelect("ctxStudyDegree", "ctxStudyDegreeCustomWrap", "ctxStudyDegreeCustom");
+
+  // Navigation buttons
+  el("obIntroBtn")?.addEventListener("click", () => goToStep("areas"));
+  el("obAreasBtn")?.addEventListener("click", advance);
+  el("obContextBtn")?.addEventListener("click", advance);
+  el("obContextSkipBtn")?.addEventListener("click", () => {
+    filterTaskTypeChips();
+    goToStep("tasks");
+  });
+  el("obTasksBtn")?.addEventListener("click", advance);
+  el("obTasksSkipBtn")?.addEventListener("click", () => goToStep("done"));
+  el("obDoneBtn")?.addEventListener("click", finishOnboarding);
+
+  // Back buttons
   document.querySelectorAll(".ob-back").forEach(btn => {
     btn.addEventListener("click", goBack);
   });
 
-  // Reset to step 1 state on first load
-  goToStep(1);
+  goToStep("intro");
 }

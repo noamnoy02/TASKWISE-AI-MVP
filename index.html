@@ -61,27 +61,27 @@
       <section id="onboardingScreen" class="screen" data-screen="onboarding">
         <div class="onboarding-container">
 
-          <div class="onboarding-progress-bar">
+          <div class="onboarding-progress-bar" id="obProgressBar">
             <div class="progress-track">
-              <div id="progressFill" class="progress-fill" style="width:12.5%"></div>
+              <div id="progressFill" class="progress-fill" style="width:25%"></div>
             </div>
-            <p id="progressText" class="progress-label">Step 1 of 8</p>
+            <p id="progressText" class="progress-label">Step 1 of 4</p>
           </div>
 
-          <!-- Step 1: Introduction -->
-          <div class="onboarding-step" id="obStep1">
+          <!-- Intro (not counted in progress) -->
+          <div class="onboarding-step" id="ob-intro">
             <div class="step-emoji">✦</div>
             <h2 class="step-title">Let's personalize TaskWise</h2>
-            <p class="step-body">A few quick questions will help TaskWise understand your responsibilities and classify your tasks more accurately.</p>
+            <p class="step-body">A few quick questions help TaskWise understand your responsibilities and classify tasks more accurately.</p>
             <div class="step-actions">
-              <button id="ob1Btn" class="primary-btn welcome-btn" type="button">Let's Start</button>
+              <button id="obIntroBtn" class="primary-btn welcome-btn" type="button">Let's Start</button>
             </div>
           </div>
 
-          <!-- Step 2: Life areas -->
-          <div class="onboarding-step hidden" id="obStep2">
-            <h2 class="step-title">Which areas are part of your daily life?</h2>
-            <p class="muted">Select all that apply. At least one is required.</p>
+          <!-- Step 1: Life areas -->
+          <div class="onboarding-step hidden" id="ob-areas">
+            <h2 class="step-title">Which areas would you like help managing?</h2>
+            <p class="muted">Select all that apply.</p>
             <div class="chip-grid" id="lifeAreasChips" data-multi="true">
               <button class="chip" type="button" data-value="Work">Work</button>
               <button class="chip" type="button" data-value="Studies">Studies</button>
@@ -93,136 +93,497 @@
             </div>
             <p id="lifeAreasError" class="field-error hidden">Please select at least one area.</p>
             <div class="step-actions">
-              <button id="ob2Btn" class="primary-btn" type="button">Continue</button>
+              <button id="obAreasBtn" class="primary-btn" type="button">Continue</button>
               <button class="ghost-btn ob-back" type="button">← Back</button>
             </div>
           </div>
 
-          <!-- Step 3: Current situation -->
-          <div class="onboarding-step hidden" id="obStep3">
-            <h2 class="step-title">Which option best describes you right now?</h2>
-            <div class="chip-grid" id="situationChips" data-multi="false">
-              <button class="chip" type="button" data-value="I work">I work</button>
-              <button class="chip" type="button" data-value="I study">I study</button>
-              <button class="chip chip-wide" type="button" data-value="I work and study">I work and study</button>
-              <button class="chip chip-wide" type="button" data-value="I manage family or household responsibilities">I manage family or household</button>
-              <button class="chip chip-wide" type="button" data-value="A combination of several areas">A combination of several areas</button>
-              <button class="chip" type="button" data-value="Other">Other</button>
+          <!-- Step 2: Relevant context (dynamic sections) -->
+          <div class="onboarding-step hidden" id="ob-context">
+            <h2 class="step-title">Tell us about your context</h2>
+            <p class="muted">Help the AI recognize tasks from the areas you selected.</p>
+
+            <!-- Work section -->
+            <div id="ctx-work" class="context-section hidden">
+              <h3 class="section-heading">Work</h3>
+              <p class="section-support">Help us recognize work-related tasks.</p>
+
+              <label for="ctxWorkIndustry">Work field <span class="optional">(optional)</span>
+                <input type="text" id="ctxWorkIndustry" list="ctxWorkIndustryList" class="searchable-input" placeholder="Search or type...">
+                <datalist id="ctxWorkIndustryList">
+                  <option value="Technology">
+                  <option value="Cybersecurity">
+                  <option value="Software Development">
+                  <option value="Product Management">
+                  <option value="Project Management">
+                  <option value="Data and Analytics">
+                  <option value="Finance">
+                  <option value="Accounting">
+                  <option value="Banking">
+                  <option value="Insurance">
+                  <option value="Marketing">
+                  <option value="Sales">
+                  <option value="Customer Success">
+                  <option value="Operations">
+                  <option value="Human Resources">
+                  <option value="Legal">
+                  <option value="Consulting">
+                  <option value="Education">
+                  <option value="Healthcare">
+                  <option value="Government">
+                  <option value="Public Sector">
+                  <option value="Design">
+                  <option value="Media and Communications">
+                  <option value="Research">
+                  <option value="Retail">
+                  <option value="Logistics">
+                  <option value="Real Estate">
+                  <option value="Engineering">
+                  <option value="Other">
+                </datalist>
+              </label>
+              <div id="ctxWorkIndustryCustomWrap" class="custom-other-wrap hidden">
+                <label for="ctxWorkIndustryCustom">Enter your work field
+                  <input type="text" id="ctxWorkIndustryCustom" placeholder="Enter your work field">
+                </label>
+              </div>
+
+              <label for="ctxWorkRole">Role or profession <span class="optional">(optional)</span>
+                <input type="text" id="ctxWorkRole" list="ctxWorkRoleList" class="searchable-input" placeholder="Search or type...">
+                <datalist id="ctxWorkRoleList">
+                  <option value="Product Manager">
+                  <option value="Project Manager">
+                  <option value="Program Manager">
+                  <option value="Software Developer">
+                  <option value="Frontend Developer">
+                  <option value="Backend Developer">
+                  <option value="Full Stack Developer">
+                  <option value="Mobile Developer">
+                  <option value="QA Engineer">
+                  <option value="DevOps Engineer">
+                  <option value="Cloud Engineer">
+                  <option value="Cybersecurity Analyst">
+                  <option value="Security Consultant">
+                  <option value="Security Engineer">
+                  <option value="SOC Analyst">
+                  <option value="Data Analyst">
+                  <option value="Data Scientist">
+                  <option value="Business Analyst">
+                  <option value="Financial Analyst">
+                  <option value="Accountant">
+                  <option value="Banker">
+                  <option value="Lawyer">
+                  <option value="Consultant">
+                  <option value="Marketing Manager">
+                  <option value="Digital Marketing Manager">
+                  <option value="Sales Manager">
+                  <option value="Account Manager">
+                  <option value="Customer Success Manager">
+                  <option value="Operations Manager">
+                  <option value="HR Manager">
+                  <option value="Recruiter">
+                  <option value="Designer">
+                  <option value="UX Designer">
+                  <option value="UI Designer">
+                  <option value="Teacher">
+                  <option value="Lecturer">
+                  <option value="Researcher">
+                  <option value="Doctor">
+                  <option value="Nurse">
+                  <option value="Therapist">
+                  <option value="Engineer">
+                  <option value="Student Employee">
+                  <option value="Freelancer">
+                  <option value="Self-employed">
+                  <option value="Other">
+                </datalist>
+              </label>
+              <div id="ctxWorkRoleCustomWrap" class="custom-other-wrap hidden">
+                <label for="ctxWorkRoleCustom">Enter your role or profession
+                  <input type="text" id="ctxWorkRoleCustom" placeholder="Enter your role or profession">
+                </label>
+              </div>
+
+              <label for="ctxWorkplace">Company or workplace <span class="optional">(optional)</span>
+                <input type="text" id="ctxWorkplace" list="ctxWorkplaceList" class="searchable-input" placeholder="Search or type...">
+                <datalist id="ctxWorkplaceList">
+                  <option value="Microsoft">
+                  <option value="Google">
+                  <option value="Amazon">
+                  <option value="Meta">
+                  <option value="Apple">
+                  <option value="Intel">
+                  <option value="Wix">
+                  <option value="Monday.com">
+                  <option value="Check Point">
+                  <option value="CyberArk">
+                  <option value="Bank Hapoalim">
+                  <option value="Bank Leumi">
+                  <option value="Discount Bank">
+                  <option value="Mizrahi-Tefahot">
+                  <option value="Government organization">
+                  <option value="University or college">
+                  <option value="Self-employed">
+                  <option value="Other">
+                </datalist>
+              </label>
+              <div id="ctxWorkplaceCustomWrap" class="custom-other-wrap hidden">
+                <label for="ctxWorkplaceCustom">Enter your company or workplace
+                  <input type="text" id="ctxWorkplaceCustom" placeholder="Enter your company or workplace">
+                </label>
+              </div>
+
+              <label for="ctxWorkProjects">Projects, clients, or people you work with <span class="optional">(optional)</span>
+                <input type="text" id="ctxWorkProjects" placeholder="e.g. Project Alpha, security surveys, Maya, client accounts">
+              </label>
             </div>
+
+            <!-- Studies section -->
+            <div id="ctx-studies" class="context-section hidden">
+              <h3 class="section-heading">Studies</h3>
+              <p class="section-support">Help us recognize study-related tasks.</p>
+
+              <label for="ctxStudyInstType">Institution type <span class="optional">(optional)</span>
+                <select id="ctxStudyInstType">
+                  <option value="">Select...</option>
+                  <option value="University">University</option>
+                  <option value="Academic College">Academic College</option>
+                  <option value="Professional College">Professional College</option>
+                  <option value="High School">High School</option>
+                  <option value="Online Program">Online Program</option>
+                  <option value="Professional Course">Professional Course</option>
+                  <option value="Certification Program">Certification Program</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <div id="ctxStudyInstTypeCustomWrap" class="custom-other-wrap hidden">
+                <label for="ctxStudyInstTypeCustom">Enter the institution type
+                  <input type="text" id="ctxStudyInstTypeCustom" placeholder="Enter the institution type">
+                </label>
+              </div>
+
+              <label for="ctxStudyInstitution">University or college <span class="optional">(optional)</span>
+                <input type="text" id="ctxStudyInstitution" list="ctxStudyInstitutionList" class="searchable-input" placeholder="Search or type...">
+                <datalist id="ctxStudyInstitutionList">
+                  <option value="Bar-Ilan University">
+                  <option value="Tel Aviv University">
+                  <option value="The Hebrew University of Jerusalem">
+                  <option value="Ben-Gurion University of the Negev">
+                  <option value="Technion – Israel Institute of Technology">
+                  <option value="University of Haifa">
+                  <option value="Reichman University">
+                  <option value="The Open University of Israel">
+                  <option value="Ariel University">
+                  <option value="Weizmann Institute of Science">
+                  <option value="The College of Management Academic Studies">
+                  <option value="Academic College of Tel Aviv-Yaffo">
+                  <option value="HIT Holon Institute of Technology">
+                  <option value="Afeka College of Engineering">
+                  <option value="Shenkar College">
+                  <option value="Sapir Academic College">
+                  <option value="Ono Academic College">
+                  <option value="Ruppin Academic Center">
+                  <option value="ORT Braude College of Engineering">
+                  <option value="Sami Shamoon College of Engineering">
+                  <option value="Netanya Academic College">
+                  <option value="Hadassah Academic College">
+                  <option value="Bezalel Academy of Arts and Design">
+                  <option value="Lev Academic Center">
+                  <option value="Kinneret Academic College">
+                  <option value="Ashkelon Academic College">
+                  <option value="Western Galilee Academic College">
+                  <option value="Peres Academic Center">
+                  <option value="Other">
+                </datalist>
+              </label>
+              <div id="ctxStudyInstitutionCustomWrap" class="custom-other-wrap hidden">
+                <label for="ctxStudyInstitutionCustom">Enter your university, college, or institution
+                  <input type="text" id="ctxStudyInstitutionCustom" placeholder="Enter your institution">
+                </label>
+              </div>
+
+              <label for="ctxStudyDegree">Degree or study level <span class="optional">(optional)</span>
+                <select id="ctxStudyDegree">
+                  <option value="">Select...</option>
+                  <option value="High School">High School</option>
+                  <option value="Certificate Program">Certificate Program</option>
+                  <option value="Professional Course">Professional Course</option>
+                  <option value="Practical Engineering Diploma">Practical Engineering Diploma</option>
+                  <option value="Bachelor's Degree">Bachelor's Degree</option>
+                  <option value="Master's Degree">Master's Degree</option>
+                  <option value="MBA">MBA</option>
+                  <option value="PhD">PhD</option>
+                  <option value="Postdoctoral Studies">Postdoctoral Studies</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <div id="ctxStudyDegreeCustomWrap" class="custom-other-wrap hidden">
+                <label for="ctxStudyDegreeCustom">Enter your degree or study level
+                  <input type="text" id="ctxStudyDegreeCustom" placeholder="Enter your degree or study level">
+                </label>
+              </div>
+
+              <label for="ctxStudyField">Field of study <span class="optional">(optional)</span>
+                <input type="text" id="ctxStudyField" list="ctxStudyFieldList" class="searchable-input" placeholder="Search or type...">
+                <datalist id="ctxStudyFieldList">
+                  <option value="Computer Science">
+                  <option value="Software Engineering">
+                  <option value="Information Systems">
+                  <option value="Data Science">
+                  <option value="Cybersecurity">
+                  <option value="Artificial Intelligence">
+                  <option value="Electrical Engineering">
+                  <option value="Industrial Engineering and Management">
+                  <option value="Mechanical Engineering">
+                  <option value="Civil Engineering">
+                  <option value="Business Administration">
+                  <option value="Economics">
+                  <option value="Accounting">
+                  <option value="Finance">
+                  <option value="Marketing">
+                  <option value="Management">
+                  <option value="Product Management">
+                  <option value="Project Management">
+                  <option value="Law">
+                  <option value="Psychology">
+                  <option value="Education">
+                  <option value="Communications">
+                  <option value="Sociology">
+                  <option value="Political Science">
+                  <option value="Biology">
+                  <option value="Chemistry">
+                  <option value="Medicine">
+                  <option value="Nursing">
+                  <option value="Design">
+                  <option value="Visual Communication">
+                  <option value="Architecture">
+                  <option value="Humanities">
+                  <option value="Social Sciences">
+                  <option value="Other">
+                </datalist>
+              </label>
+              <div id="ctxStudyFieldCustomWrap" class="custom-other-wrap hidden">
+                <label for="ctxStudyFieldCustom">Enter your field of study
+                  <input type="text" id="ctxStudyFieldCustom" placeholder="Enter your field of study">
+                </label>
+              </div>
+
+              <label for="ctxStudyCourses">Courses, projects, or lecturers <span class="optional">(optional)</span>
+                <input type="text" id="ctxStudyCourses" placeholder="e.g. Product Seminar, Data Structures, Final Project">
+              </label>
+            </div>
+
+            <!-- Family section -->
+            <div id="ctx-family" class="context-section hidden">
+              <h3 class="section-heading">Family</h3>
+              <p class="section-support">Help us recognize family-related tasks.</p>
+              <p class="chip-label-text">Family responsibilities <span class="optional">(optional)</span></p>
+              <div class="chip-grid" id="familyRespChips" data-multi="true">
+                <button class="chip" type="button" data-value="Childcare">Childcare</button>
+                <button class="chip" type="button" data-value="School or kindergarten">School or kindergarten</button>
+                <button class="chip" type="button" data-value="Medical appointments">Medical appointments</button>
+                <button class="chip" type="button" data-value="Family events">Family events</button>
+                <button class="chip" type="button" data-value="Shared household planning">Shared household planning</button>
+                <button class="chip" type="button" data-value="Shopping for the family">Shopping for the family</button>
+                <button class="chip" type="button" data-value="Bills and payments">Bills and payments</button>
+                <button class="chip" type="button" data-value="Transportation and pickups">Transportation and pickups</button>
+                <button class="chip" type="button" data-value="Care for parents or relatives">Care for parents or relatives</button>
+                <button class="chip" type="button" data-value="Pet care">Pet care</button>
+                <button class="chip" type="button" data-value="Other" data-triggers-other="true">Other</button>
+              </div>
+              <div id="familyRespOtherWrap" class="custom-other-wrap hidden">
+                <label for="familyRespOther">Enter another family responsibility
+                  <input type="text" id="familyRespOther" placeholder="Enter another family responsibility">
+                </label>
+              </div>
+              <label for="ctxFamilyPeople">People you often manage tasks with <span class="optional">(optional)</span>
+                <input type="text" id="ctxFamilyPeople" placeholder="e.g. Partner, Noa, Mom, Dad">
+              </label>
+            </div>
+
+            <!-- Home section -->
+            <div id="ctx-home" class="context-section hidden">
+              <h3 class="section-heading">Home</h3>
+              <p class="chip-label-text">Common home responsibilities <span class="optional">(optional)</span></p>
+              <div class="chip-grid" id="homeRespChips" data-multi="true">
+                <button class="chip" type="button" data-value="Groceries">Groceries</button>
+                <button class="chip" type="button" data-value="Cleaning">Cleaning</button>
+                <button class="chip" type="button" data-value="Laundry">Laundry</button>
+                <button class="chip" type="button" data-value="Cooking">Cooking</button>
+                <button class="chip" type="button" data-value="Repairs">Repairs</button>
+                <button class="chip" type="button" data-value="Maintenance">Maintenance</button>
+                <button class="chip" type="button" data-value="Utilities">Utilities</button>
+                <button class="chip" type="button" data-value="Rent or mortgage">Rent or mortgage</button>
+                <button class="chip" type="button" data-value="Deliveries">Deliveries</button>
+                <button class="chip" type="button" data-value="Home organization">Home organization</button>
+                <button class="chip" type="button" data-value="Pet care">Pet care</button>
+                <button class="chip" type="button" data-value="Other" data-triggers-other="true">Other</button>
+              </div>
+              <div id="homeRespOtherWrap" class="custom-other-wrap hidden">
+                <label for="homeRespOther">Enter another home responsibility
+                  <input type="text" id="homeRespOther" placeholder="Enter another home responsibility">
+                </label>
+              </div>
+            </div>
+
+            <!-- Personal section -->
+            <div id="ctx-personal" class="context-section hidden">
+              <h3 class="section-heading">Personal</h3>
+              <p class="chip-label-text">Common personal responsibilities <span class="optional">(optional)</span></p>
+              <div class="chip-grid" id="personalRespChips" data-multi="true">
+                <button class="chip" type="button" data-value="Personal appointments">Personal appointments</button>
+                <button class="chip" type="button" data-value="Administrative tasks">Administrative tasks</button>
+                <button class="chip" type="button" data-value="Documents and forms">Documents and forms</button>
+                <button class="chip" type="button" data-value="Personal projects">Personal projects</button>
+                <button class="chip" type="button" data-value="Learning and development">Learning and development</button>
+                <button class="chip" type="button" data-value="Social plans">Social plans</button>
+                <button class="chip" type="button" data-value="Travel planning">Travel planning</button>
+                <button class="chip" type="button" data-value="Fitness">Fitness</button>
+                <button class="chip" type="button" data-value="Shopping">Shopping</button>
+                <button class="chip" type="button" data-value="Personal finances">Personal finances</button>
+                <button class="chip" type="button" data-value="Other" data-triggers-other="true">Other</button>
+              </div>
+              <div id="personalRespOtherWrap" class="custom-other-wrap hidden">
+                <label for="personalRespOther">Enter another personal responsibility
+                  <input type="text" id="personalRespOther" placeholder="Enter another personal responsibility">
+                </label>
+              </div>
+            </div>
+
+            <!-- Health section -->
+            <div id="ctx-health" class="context-section hidden">
+              <h3 class="section-heading">Health</h3>
+              <p class="chip-label-text">Common health-related tasks <span class="optional">(optional)</span></p>
+              <div class="chip-grid" id="healthRespChips" data-multi="true">
+                <button class="chip" type="button" data-value="Doctor appointments">Doctor appointments</button>
+                <button class="chip" type="button" data-value="Dental appointments">Dental appointments</button>
+                <button class="chip" type="button" data-value="Prescriptions">Prescriptions</button>
+                <button class="chip" type="button" data-value="Medication reminders">Medication reminders</button>
+                <button class="chip" type="button" data-value="Lab tests">Lab tests</button>
+                <button class="chip" type="button" data-value="Medical forms">Medical forms</button>
+                <button class="chip" type="button" data-value="Insurance claims">Insurance claims</button>
+                <button class="chip" type="button" data-value="Therapy appointments">Therapy appointments</button>
+                <button class="chip" type="button" data-value="Fitness or physiotherapy">Fitness or physiotherapy</button>
+                <button class="chip" type="button" data-value="Other" data-triggers-other="true">Other</button>
+              </div>
+              <div id="healthRespOtherWrap" class="custom-other-wrap hidden">
+                <label for="healthRespOther">Enter another health-related task
+                  <input type="text" id="healthRespOther" placeholder="Enter another health-related task">
+                </label>
+              </div>
+            </div>
+
+            <!-- Finances section -->
+            <div id="ctx-finances" class="context-section hidden">
+              <h3 class="section-heading">Finances</h3>
+              <p class="chip-label-text">Common finance-related tasks <span class="optional">(optional)</span></p>
+              <div class="chip-grid" id="financeRespChips" data-multi="true">
+                <button class="chip" type="button" data-value="Bills">Bills</button>
+                <button class="chip" type="button" data-value="Credit card payments">Credit card payments</button>
+                <button class="chip" type="button" data-value="Bank transfers">Bank transfers</button>
+                <button class="chip" type="button" data-value="Taxes">Taxes</button>
+                <button class="chip" type="button" data-value="Insurance payments">Insurance payments</button>
+                <button class="chip" type="button" data-value="Rent">Rent</button>
+                <button class="chip" type="button" data-value="Mortgage">Mortgage</button>
+                <button class="chip" type="button" data-value="Reimbursements">Reimbursements</button>
+                <button class="chip" type="button" data-value="Salary-related tasks">Salary-related tasks</button>
+                <button class="chip" type="button" data-value="Budgeting">Budgeting</button>
+                <button class="chip" type="button" data-value="Subscriptions">Subscriptions</button>
+                <button class="chip" type="button" data-value="Other" data-triggers-other="true">Other</button>
+              </div>
+              <div id="financeRespOtherWrap" class="custom-other-wrap hidden">
+                <label for="financeRespOther">Enter another finance-related task
+                  <input type="text" id="financeRespOther" placeholder="Enter another finance-related task">
+                </label>
+              </div>
+            </div>
+
+            <p id="obContextError" class="field-error hidden">If you selected Other, please fill in the custom field before continuing.</p>
             <div class="step-actions">
-              <button id="ob3Btn" class="primary-btn" type="button">Continue</button>
+              <button id="obContextBtn" class="primary-btn" type="button">Continue</button>
+              <button id="obContextSkipBtn" class="secondary-btn" type="button">Skip for now</button>
               <button class="ghost-btn ob-back" type="button">← Back</button>
             </div>
           </div>
 
-          <!-- Step 4: Work context (conditional) -->
-          <div class="onboarding-step hidden" id="obStep4">
-            <h2 class="step-title">What kind of work do you do?</h2>
-            <div class="chip-grid" id="industryChips" data-multi="false">
-              <button class="chip" type="button" data-value="Technology">Technology</button>
-              <button class="chip" type="button" data-value="Project management">Project management</button>
-              <button class="chip" type="button" data-value="Finance">Finance</button>
-              <button class="chip" type="button" data-value="Education">Education</button>
-              <button class="chip" type="button" data-value="Healthcare">Healthcare</button>
-              <button class="chip" type="button" data-value="Marketing">Marketing</button>
-              <button class="chip" type="button" data-value="Operations">Operations</button>
-              <button class="chip" type="button" data-value="Other">Other</button>
-            </div>
-            <label for="workRoleInput" class="mt-sm">
-              Your role or profession <span class="optional">(optional)</span>
-              <input id="workRoleInput" type="text" placeholder="e.g. Project Manager in cybersecurity" />
-            </label>
-            <label>
-              Common projects, clients, or people <span class="optional">(optional)</span>
-              <input id="workProjectsInput" type="text" placeholder="e.g. Harel, security surveys, internal projects" />
-            </label>
-            <div class="step-actions">
-              <button id="ob4Btn" class="primary-btn" type="button">Continue</button>
-              <button id="ob4SkipBtn" class="secondary-btn" type="button">Skip for now</button>
-              <button class="ghost-btn ob-back" type="button">← Back</button>
-            </div>
-          </div>
-
-          <!-- Step 5: Study context (conditional) -->
-          <div class="onboarding-step hidden" id="obStep5">
-            <h2 class="step-title">What are you currently studying?</h2>
-            <div class="chip-grid" id="studyTypeChips" data-multi="false">
-              <button class="chip" type="button" data-value="Undergraduate degree">Undergraduate degree</button>
-              <button class="chip" type="button" data-value="Graduate degree">Graduate degree</button>
-              <button class="chip" type="button" data-value="Professional course">Professional course</button>
-              <button class="chip" type="button" data-value="Certification">Certification</button>
-              <button class="chip" type="button" data-value="School">School</button>
-              <button class="chip" type="button" data-value="Other">Other</button>
-            </div>
-            <label for="studyFieldInput" class="mt-sm">
-              Field of study <span class="optional">(optional)</span>
-              <input id="studyFieldInput" type="text" placeholder="e.g. Computer Science, Business" />
-            </label>
-            <label>
-              Institution <span class="optional">(optional)</span>
-              <input id="studyInstitutionInput" type="text" placeholder="e.g. Tel Aviv University" />
-            </label>
-            <label>
-              Common courses or projects <span class="optional">(optional)</span>
-              <input id="studyProjectsInput" type="text" placeholder="e.g. Seminar project, Advanced algorithms" />
-            </label>
-            <div class="step-actions">
-              <button id="ob5Btn" class="primary-btn" type="button">Continue</button>
-              <button id="ob5SkipBtn" class="secondary-btn" type="button">Skip for now</button>
-              <button class="ghost-btn ob-back" type="button">← Back</button>
-            </div>
-          </div>
-
-          <!-- Step 6: Family / Home context (conditional) -->
-          <div class="onboarding-step hidden" id="obStep6">
-            <h2 class="step-title">What responsibilities do you usually manage?</h2>
-            <p class="muted">Select all that apply.</p>
-            <div class="chip-grid" id="familyChips" data-multi="true">
-              <button class="chip" type="button" data-value="Children">Children</button>
-              <button class="chip" type="button" data-value="Household tasks">Household tasks</button>
-              <button class="chip" type="button" data-value="Appointments">Appointments</button>
-              <button class="chip chip-wide" type="button" data-value="Shopping and errands">Shopping and errands</button>
-              <button class="chip chip-wide" type="button" data-value="Bills and payments">Bills and payments</button>
-              <button class="chip chip-wide" type="button" data-value="Shared responsibilities with a partner">Shared with a partner</button>
-              <button class="chip" type="button" data-value="Other">Other</button>
-            </div>
-            <div class="step-actions">
-              <button id="ob6Btn" class="primary-btn" type="button">Continue</button>
-              <button id="ob6SkipBtn" class="secondary-btn" type="button">Skip for now</button>
-              <button class="ghost-btn ob-back" type="button">← Back</button>
-            </div>
-          </div>
-
-          <!-- Step 7: Common task types -->
-          <div class="onboarding-step hidden" id="obStep7">
-            <h2 class="step-title">What types of tasks do you handle most often?</h2>
+          <!-- Step 3: Task types (filtered by life areas) -->
+          <div class="onboarding-step hidden" id="ob-tasks">
+            <h2 class="step-title">What types of tasks do you manage most often?</h2>
             <p class="muted">Select all that apply.</p>
             <div class="chip-grid" id="taskTypesChips" data-multi="true">
-              <button class="chip" type="button" data-value="Meetings">Meetings</button>
-              <button class="chip" type="button" data-value="Reports">Reports</button>
-              <button class="chip" type="button" data-value="Assignments">Assignments</button>
-              <button class="chip chip-wide" type="button" data-value="Emails and follow-ups">Emails and follow-ups</button>
-              <button class="chip" type="button" data-value="Bills">Bills</button>
-              <button class="chip" type="button" data-value="Appointments">Appointments</button>
-              <button class="chip chip-wide" type="button" data-value="Shopping and errands">Shopping and errands</button>
-              <button class="chip" type="button" data-value="Family tasks">Family tasks</button>
-              <button class="chip chip-wide" type="button" data-value="Personal reminders">Personal reminders</button>
-              <button class="chip" type="button" data-value="Other">Other</button>
+              <!-- Work -->
+              <button class="chip task-chip hidden" type="button" data-value="meetings" data-areas="Work">Meetings</button>
+              <button class="chip task-chip hidden" type="button" data-value="emails_followups" data-areas="Work">Emails and follow-ups</button>
+              <button class="chip task-chip hidden" type="button" data-value="reports_documents" data-areas="Work">Reports and documents</button>
+              <button class="chip task-chip hidden" type="button" data-value="presentations" data-areas="Work,Studies">Presentations</button>
+              <button class="chip task-chip hidden" type="button" data-value="project_tasks" data-areas="Work">Project tasks</button>
+              <button class="chip task-chip hidden" type="button" data-value="client_requests" data-areas="Work">Client requests</button>
+              <button class="chip task-chip hidden" type="button" data-value="approvals" data-areas="Work">Approvals</button>
+              <button class="chip task-chip hidden" type="button" data-value="deadlines" data-areas="Work">Deadlines</button>
+              <!-- Studies -->
+              <button class="chip task-chip hidden" type="button" data-value="assignments" data-areas="Studies">Assignments</button>
+              <button class="chip task-chip hidden" type="button" data-value="exams" data-areas="Studies">Exams</button>
+              <button class="chip task-chip hidden" type="button" data-value="submissions" data-areas="Studies">Submissions</button>
+              <button class="chip task-chip hidden" type="button" data-value="reading" data-areas="Studies">Reading</button>
+              <button class="chip task-chip hidden" type="button" data-value="group_projects" data-areas="Studies">Group projects</button>
+              <button class="chip task-chip hidden" type="button" data-value="classes" data-areas="Studies">Classes</button>
+              <button class="chip task-chip hidden" type="button" data-value="academic_deadlines" data-areas="Studies">Academic deadlines</button>
+              <!-- Family -->
+              <button class="chip task-chip hidden" type="button" data-value="pickups_dropoffs" data-areas="Family">Pickups and drop-offs</button>
+              <button class="chip task-chip hidden" type="button" data-value="school_activities" data-areas="Family">School activities</button>
+              <button class="chip task-chip hidden" type="button" data-value="family_appointments" data-areas="Family">Family appointments</button>
+              <button class="chip task-chip hidden" type="button" data-value="shared_tasks" data-areas="Family">Shared tasks</button>
+              <button class="chip task-chip hidden" type="button" data-value="family_events" data-areas="Family">Family events</button>
+              <button class="chip task-chip hidden" type="button" data-value="childcare_tasks" data-areas="Family">Childcare tasks</button>
+              <!-- Home -->
+              <button class="chip task-chip hidden" type="button" data-value="shopping_errands" data-areas="Home,Finances">Shopping and errands</button>
+              <button class="chip task-chip hidden" type="button" data-value="cleaning" data-areas="Home">Cleaning</button>
+              <button class="chip task-chip hidden" type="button" data-value="repairs" data-areas="Home">Repairs</button>
+              <button class="chip task-chip hidden" type="button" data-value="deliveries" data-areas="Home">Deliveries</button>
+              <button class="chip task-chip hidden" type="button" data-value="bills_payments" data-areas="Home,Finances">Bills and payments</button>
+              <button class="chip task-chip hidden" type="button" data-value="home_maintenance" data-areas="Home">Home maintenance</button>
+              <!-- Personal -->
+              <button class="chip task-chip hidden" type="button" data-value="personal_reminders" data-areas="Personal">Personal reminders</button>
+              <button class="chip task-chip hidden" type="button" data-value="appointments" data-areas="Personal">Appointments</button>
+              <button class="chip task-chip hidden" type="button" data-value="forms_paperwork" data-areas="Personal">Forms and paperwork</button>
+              <button class="chip task-chip hidden" type="button" data-value="personal_projects" data-areas="Personal">Personal projects</button>
+              <button class="chip task-chip hidden" type="button" data-value="social_plans" data-areas="Personal">Social plans</button>
+              <button class="chip task-chip hidden" type="button" data-value="travel_planning" data-areas="Personal">Travel planning</button>
+              <!-- Health -->
+              <button class="chip task-chip hidden" type="button" data-value="medical_appointments" data-areas="Health">Medical appointments</button>
+              <button class="chip task-chip hidden" type="button" data-value="prescriptions" data-areas="Health">Prescriptions</button>
+              <button class="chip task-chip hidden" type="button" data-value="lab_tests" data-areas="Health">Lab tests</button>
+              <button class="chip task-chip hidden" type="button" data-value="medication_reminders" data-areas="Health">Medication reminders</button>
+              <button class="chip task-chip hidden" type="button" data-value="insurance_forms" data-areas="Health">Insurance forms</button>
+              <!-- Finances -->
+              <button class="chip task-chip hidden" type="button" data-value="bank_transfers" data-areas="Finances">Bank transfers</button>
+              <button class="chip task-chip hidden" type="button" data-value="taxes" data-areas="Finances">Taxes</button>
+              <button class="chip task-chip hidden" type="button" data-value="reimbursements" data-areas="Finances">Reimbursements</button>
+              <button class="chip task-chip hidden" type="button" data-value="budgeting" data-areas="Finances">Budgeting</button>
+              <button class="chip task-chip hidden" type="button" data-value="subscription_renewals" data-areas="Finances">Subscription renewals</button>
+              <!-- Universal -->
+              <button class="chip task-chip" type="button" data-value="other" data-areas="*" data-triggers-other="true">Other</button>
+            </div>
+            <div id="taskTypesOtherWrap" class="custom-other-wrap hidden">
+              <label for="taskTypesOther">Enter another task type
+                <input type="text" id="taskTypesOther" placeholder="e.g. Budget review, team standup">
+              </label>
             </div>
             <div class="step-actions">
-              <button id="ob7Btn" class="primary-btn" type="button">Continue</button>
-              <button id="ob7SkipBtn" class="secondary-btn" type="button">Skip for now</button>
+              <button id="obTasksBtn" class="primary-btn" type="button">Continue</button>
+              <button id="obTasksSkipBtn" class="secondary-btn" type="button">Skip for now</button>
               <button class="ghost-btn ob-back" type="button">← Back</button>
             </div>
           </div>
 
-          <!-- Step 8: Completion -->
-          <div class="onboarding-step hidden" id="obStep8">
+          <!-- Step 4: Completion -->
+          <div class="onboarding-step hidden" id="ob-done">
             <div class="step-emoji completion-emoji">✦</div>
-            <h2 class="step-title">TaskWise is ready for you</h2>
-            <p class="step-body">Your profile will help the AI understand whether a task belongs to work, studies, family, or another part of your life. You can update this information at any time.</p>
+            <h2 class="step-title">You're all set</h2>
+            <p class="step-body">Paste a message, email, or reminder and we'll turn it into a clear task.</p>
+            <p class="muted">You can always review and edit the result before saving.</p>
             <div class="step-actions">
-              <button id="ob8Btn" class="primary-btn welcome-btn" type="button">Go to TaskWise</button>
+              <button id="obDoneBtn" class="primary-btn welcome-btn" type="button">Start using the app</button>
             </div>
           </div>
 

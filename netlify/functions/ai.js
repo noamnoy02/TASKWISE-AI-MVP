@@ -266,12 +266,41 @@ ${sourceText}
 function serializeContext(ctx) {
   if (!ctx || !Object.keys(ctx).length) return "No context available.";
   const lines = [];
+
+  if (ctx.lifeAreas?.length) lines.push(`Life areas: ${ctx.lifeAreas.join(", ")}`);
+
+  // New schema (post-refactor)
+  if (ctx.work) {
+    const w = ctx.work;
+    if (w.industry) lines.push(`Work industry: ${w.industry}`);
+    if (w.role) lines.push(`Work role: ${w.role}`);
+    if (w.workplace) lines.push(`Workplace: ${w.workplace}`);
+    if (w.projectsOrPeople?.length) lines.push(`Work projects/people: ${w.projectsOrPeople.join(", ")}`);
+  }
+  if (ctx.studies) {
+    const s = ctx.studies;
+    if (s.institution) lines.push(`Institution: ${s.institution}`);
+    if (s.degreeLevel) lines.push(`Degree level: ${s.degreeLevel}`);
+    if (s.fieldOfStudy) lines.push(`Field of study: ${s.fieldOfStudy}`);
+    if (s.coursesOrPeople?.length) lines.push(`Courses/people: ${s.coursesOrPeople.join(", ")}`);
+  }
+  if (ctx.family) {
+    if (ctx.family.responsibilities?.length) lines.push(`Family responsibilities: ${ctx.family.responsibilities.join(", ")}`);
+    if (ctx.family.people?.length) lines.push(`Family/household people: ${ctx.family.people.join(", ")}`);
+  }
+  if (ctx.home?.responsibilities?.length) lines.push(`Home responsibilities: ${ctx.home.responsibilities.join(", ")}`);
+  if (ctx.personal?.responsibilities?.length) lines.push(`Personal responsibilities: ${ctx.personal.responsibilities.join(", ")}`);
+  if (ctx.health?.responsibilities?.length) lines.push(`Health responsibilities: ${ctx.health.responsibilities.join(", ")}`);
+  if (ctx.finances?.responsibilities?.length) lines.push(`Finance responsibilities: ${ctx.finances.responsibilities.join(", ")}`);
+
+  // Legacy schema fields (backwards compatibility with old profiles)
   if (ctx.workplaces?.length) lines.push(`Workplaces/industries: ${ctx.workplaces.join(", ")}`);
   if (ctx.universities?.length) lines.push(`Universities: ${ctx.universities.join(", ")}`);
   if (ctx.courses?.length) lines.push(`Courses/fields: ${ctx.courses.join(", ")}`);
   if (ctx.knownPeople?.length) lines.push(`Known people: ${ctx.knownPeople.join(", ")}`);
   if (ctx.knownProjects?.length) lines.push(`Known projects/clients: ${ctx.knownProjects.join(", ")}`);
   if (ctx.familyResponsibilities?.length) lines.push(`Family responsibilities: ${ctx.familyResponsibilities.join(", ")}`);
+
   return lines.length ? lines.join("\n") : "No relevant context available.";
 }
 

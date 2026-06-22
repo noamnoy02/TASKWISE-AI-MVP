@@ -32,30 +32,61 @@ function renderChips(container, items) {
     : `<span class="muted" style="font-size:0.84rem">None recorded</span>`;
 }
 
+function effectiveField(primary, custom) {
+  return (!primary || primary === "Other") ? (custom || null) : primary;
+}
+
 function buildAiContextText(profile) {
   if (!profile) return "No profile data yet.";
   const lines = [];
 
-  if (profile.workContext?.role) lines.push(`Role: ${profile.workContext.role}`);
-  if (profile.workContext?.industry) lines.push(`Industry: ${profile.workContext.industry}`);
-  if (profile.workContext?.knownPeople) lines.push(`Known people: ${profile.workContext.knownPeople}`);
-  if (profile.workContext?.commonProjects) lines.push(`Projects: ${profile.workContext.commonProjects}`);
-  if (profile.studyContext?.field) lines.push(`Studying: ${profile.studyContext.field}`);
-  if (profile.studyContext?.institution) lines.push(`Institution: ${profile.studyContext.institution}`);
+  if (profile.lifeAreas?.length) lines.push(`Life areas: ${profile.lifeAreas.join(", ")}`);
+
+  const wc = profile.workContext;
+  if (wc) {
+    const industry = effectiveField(wc.industry, wc.industryCustom);
+    const role = effectiveField(wc.role, wc.roleCustom);
+    const workplace = effectiveField(wc.workplace, wc.workplaceCustom);
+    if (role) lines.push(`Role: ${role}`);
+    if (industry) lines.push(`Industry: ${industry}`);
+    if (workplace) lines.push(`Workplace: ${workplace}`);
+    // New schema: projectsOrPeople array; old: knownPeople/commonProjects strings
+    const projects = wc.projectsOrPeople?.length
+      ? wc.projectsOrPeople.join(", ")
+      : [wc.knownPeople, wc.commonProjects].filter(Boolean).join(", ");
+    if (projects) lines.push(`Work projects/people: ${projects}`);
+  }
+
+  const sc = profile.studyContext;
+  if (sc) {
+    const institution = effectiveField(sc.institution, sc.institutionCustom);
+    const degree = effectiveField(sc.degreeLevel, sc.degreeLevelCustom) || sc.studyType;
+    // New schema: fieldOfStudy; old: field
+    const field = effectiveField(sc.fieldOfStudy || sc.field, sc.fieldOfStudyCustom);
+    if (institution) lines.push(`Institution: ${institution}`);
+    if (degree) lines.push(`Degree: ${degree}`);
+    if (field) lines.push(`Field: ${field}`);
+    const courses = sc.coursesOrPeople?.length
+      ? sc.coursesOrPeople.join(", ")
+      : sc.commonProjects;
+    if (courses) lines.push(`Courses/projects: ${courses}`);
+  }
+
   if (profile.familyContext?.responsibilities?.length) {
     lines.push(`Family: ${profile.familyContext.responsibilities.join(", ")}`);
   }
-  if (profile.lifeAreas?.length) lines.push(`Life areas: ${profile.lifeAreas.join(", ")}`);
-  if (profile.currentSituation) lines.push(`Situation: ${profile.currentSituation}`);
+  if (profile.homeContext?.responsibilities?.length) {
+    lines.push(`Home: ${profile.homeContext.responsibilities.join(", ")}`);
+  }
+  if (profile.healthContext?.responsibilities?.length) {
+    lines.push(`Health: ${profile.healthContext.responsibilities.join(", ")}`);
+  }
+  if (profile.financeContext?.responsibilities?.length) {
+    lines.push(`Finances: ${profile.financeContext.responsibilities.join(", ")}`);
+  }
   if (profile.commonTaskTypes?.length) {
     lines.push(`Common task types: ${profile.commonTaskTypes.join(", ")}`);
   }
-
-  // Backward compat: old profile format
-  if (profile.work) lines.push(`Work: ${profile.work}`);
-  if (profile.studies) lines.push(`Studies: ${profile.studies}`);
-  if (profile.people?.length) lines.push(`Known people: ${profile.people.join(", ")}`);
-  if (profile.projects?.length) lines.push(`Projects: ${profile.projects.join(", ")}`);
 
   return lines.length ? lines.join("\n") : "Minimal profile — complete onboarding for richer AI context.";
 }
@@ -88,38 +119,50 @@ export function renderProfileScreen() {
     els.lifeAreasSection.classList.add("hidden");
   }
 
-  // Work
+  // Work — handles both old and new schema
   const wc = profile?.workContext;
-  if (wc && (wc.role || wc.industry || wc.commonProjects)) {
-    els.workSection.classList.remove("hidden");
-    const parts = [];
-    if (wc.industry) parts.push(`<p><strong>Industry:</strong> ${escapeHtml(wc.industry)}</p>`);
-    if (wc.role) parts.push(`<p><strong>Role:</strong> ${escapeHtml(wc.role)}</p>`);
-    if (wc.knownPeople) parts.push(`<p><strong>People:</strong> ${escapeHtml(wc.knownPeople)}</p>`);
-    if (wc.commonProjects) parts.push(`<p><strong>Projects:</strong> ${escapeHtml(wc.commonProjects)}</p>`);
-    // Backward compat
-    if (profile.work) parts.push(`<p><strong>Work:</strong> ${escapeHtml(profile.work)}</p>`);
-    els.workDetail.innerHTML = parts.join("");
-  } else if (profile?.work) {
-    els.workSection.classList.remove("hidden");
-    els.workDetail.innerHTML = `<p>${escapeHtml(profile.work)}</p>`;
+  if (wc) {
+    const industry = effectiveField(wc.industry, wc.industryCustom);
+    const role = effectiveField(wc.role, wc.roleCustom);
+    const workplace = effectiveField(wc.workplace, wc.workplaceCustom);
+    const projects = wc.projectsOrPeople?.length
+      ? wc.projectsOrPeople.join(", ")
+      : [wc.knownPeople, wc.commonProjects].filter(Boolean).join(", ");
+    if (industry || role || workplace || projects) {
+      els.workSection.classList.remove("hidden");
+      const parts = [];
+      if (industry) parts.push(`<p><strong>Industry:</strong> ${escapeHtml(industry)}</p>`);
+      if (role) parts.push(`<p><strong>Role:</strong> ${escapeHtml(role)}</p>`);
+      if (workplace) parts.push(`<p><strong>Workplace:</strong> ${escapeHtml(workplace)}</p>`);
+      if (projects) parts.push(`<p><strong>Projects/people:</strong> ${escapeHtml(projects)}</p>`);
+      els.workDetail.innerHTML = parts.join("");
+    } else {
+      els.workSection.classList.add("hidden");
+    }
   } else {
     els.workSection.classList.add("hidden");
   }
 
-  // Studies
+  // Studies — handles both old and new schema
   const sc = profile?.studyContext;
-  if (sc && (sc.field || sc.studyType || sc.institution)) {
-    els.studySection.classList.remove("hidden");
-    const parts = [];
-    if (sc.studyType) parts.push(`<p><strong>Type:</strong> ${escapeHtml(sc.studyType)}</p>`);
-    if (sc.field) parts.push(`<p><strong>Field:</strong> ${escapeHtml(sc.field)}</p>`);
-    if (sc.institution) parts.push(`<p><strong>Institution:</strong> ${escapeHtml(sc.institution)}</p>`);
-    if (sc.commonProjects) parts.push(`<p><strong>Projects:</strong> ${escapeHtml(sc.commonProjects)}</p>`);
-    els.studyDetail.innerHTML = parts.join("");
-  } else if (profile?.studies) {
-    els.studySection.classList.remove("hidden");
-    els.studyDetail.innerHTML = `<p>${escapeHtml(profile.studies)}</p>`;
+  if (sc) {
+    const instType = effectiveField(sc.institutionType, sc.institutionTypeCustom) || sc.studyType;
+    const institution = effectiveField(sc.institution, sc.institutionCustom);
+    const degree = effectiveField(sc.degreeLevel, sc.degreeLevelCustom);
+    const field = effectiveField(sc.fieldOfStudy || sc.field, sc.fieldOfStudyCustom);
+    const courses = sc.coursesOrPeople?.length ? sc.coursesOrPeople.join(", ") : sc.commonProjects;
+    if (instType || institution || degree || field || courses) {
+      els.studySection.classList.remove("hidden");
+      const parts = [];
+      if (instType) parts.push(`<p><strong>Type:</strong> ${escapeHtml(instType)}</p>`);
+      if (institution) parts.push(`<p><strong>Institution:</strong> ${escapeHtml(institution)}</p>`);
+      if (degree) parts.push(`<p><strong>Degree:</strong> ${escapeHtml(degree)}</p>`);
+      if (field) parts.push(`<p><strong>Field:</strong> ${escapeHtml(field)}</p>`);
+      if (courses) parts.push(`<p><strong>Courses/projects:</strong> ${escapeHtml(courses)}</p>`);
+      els.studyDetail.innerHTML = parts.join("");
+    } else {
+      els.studySection.classList.add("hidden");
+    }
   } else {
     els.studySection.classList.add("hidden");
   }

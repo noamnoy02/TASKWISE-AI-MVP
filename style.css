@@ -1072,6 +1072,59 @@ body[data-active-screen="onboarding"] .app-shell {
   font-size: 0.88rem;
 }
 
+/* ── Context step — dynamic sections ── */
+.context-section {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1.5px solid var(--border);
+}
+
+.section-heading {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.section-support {
+  font-size: 0.84rem;
+  color: var(--muted);
+  margin: 0 0 14px;
+}
+
+.chip-label-text {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  display: block;
+  margin-bottom: 10px;
+  margin-top: 14px;
+}
+
+.custom-other-wrap {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--primary-soft);
+  border-radius: 8px;
+}
+
+.custom-other-wrap > label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  gap: 6px;
+}
+
+.custom-other-wrap input[type="text"] {
+  margin-top: 6px;
+  background: #fff;
+}
+
+.searchable-input {
+  width: 100%;
+}
+
 /* ── Multi-step onboarding ── */
 .onboarding-container {
   min-height: 100vh;
