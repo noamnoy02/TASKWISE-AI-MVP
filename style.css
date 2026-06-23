@@ -821,7 +821,7 @@ summary {
   border-radius: 999px;
   box-shadow: 0 18px 44px rgba(78, 94, 140, 0.18);
   display: flex;
-  justify-content: space-around;
+  justify-content: space-evenly;
   align-items: center;
   z-index: 50;
   backdrop-filter: blur(18px);
@@ -1571,21 +1571,21 @@ button.source-chip.selected {
   margin-top: 22px;
 }
 
-/* ── Updated bottom nav: 4 equal buttons with labels ── */
+/* ── Updated bottom nav: naturally-sized buttons with labels ── */
 .bottom-nav button {
   border: 0;
   background: transparent;
   color: #7b8190;
   width: auto;
   height: auto;
-  padding: 8px 14px;
-  border-radius: 14px;
+  padding: 6px 14px;
+  border-radius: 99px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
   font-size: inherit;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .nav-icon {
@@ -1888,9 +1888,9 @@ body {
 .bottom-nav {
   height: 72px;
   overflow: visible;
+  justify-content: space-evenly;
 }
 
-/* Reset old 42px grid layout; force flex-column for all buttons */
 .bottom-nav button {
   display: flex;
   flex-direction: column;
@@ -1899,30 +1899,29 @@ body {
   gap: 3px;
   width: auto;
   height: auto;
-  padding: 6px 10px;
-  border-radius: 14px;
+  padding: 6px 14px;
+  border-radius: 99px;
   font-size: inherit;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .nav-icon { font-size: 1.15rem; line-height: 1; display: block; }
 .nav-label { font-size: 0.62rem; font-weight: 700; display: block; line-height: 1; }
 
-/* Reset old 54px dark square; apply purple gradient */
 .bottom-nav .nav-main {
   width: auto;
   height: auto;
-  min-width: 60px;
-  padding: 10px 14px;
+  min-width: 64px;
+  padding: 10px 18px;
   border-radius: 18px;
   background: linear-gradient(135deg, var(--primary), #9b8bff);
   color: #ffffff;
   font-size: inherit;
   transform: translateY(-11px);
   box-shadow: 0 8px 22px rgba(109, 93, 252, 0.36);
+  flex: 0 0 auto;
 }
 
-.bottom-nav .nav-main.active,
 .bottom-nav button.active {
   color: var(--primary);
   background: var(--primary-soft);
