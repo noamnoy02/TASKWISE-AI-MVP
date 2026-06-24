@@ -230,8 +230,8 @@ function fillPreview(task, badgeLabel, badgeClass) {
   els.previewSuggestedAction.value = task.suggestedAction || "";
   els.previewPriorityReason.value = task.priorityReason || "";
 
-  els.aiSourceBadge.textContent = badgeLabel || "AI result";
-  els.aiSourceBadge.className = `status-pill ${badgeClass || "ai"}`;
+  els.aiSourceBadge.textContent = `✦ ${badgeLabel || "AI result"}`;
+  els.aiSourceBadge.className = `extraction-count`;
 
   showPreviewStep();
 }
@@ -390,6 +390,26 @@ export function resetCaptureScreen() {
 export function initCaptureScreen(options = {}) {
   onTaskSaved = options.onTaskSaved || null;
 
+  // ── Character counter ─────────────────────────────────────────────
+  const charCounter = document.getElementById("charCounter");
+  function updateCharCounter() {
+    if (!charCounter) return;
+    const len = els.sourceTextInput.value.length;
+    charCounter.textContent = `${len} / ${MAX_INPUT_CHARS}`;
+    charCounter.className = "char-counter" +
+      (len >= MAX_INPUT_CHARS ? " at-limit" : len >= MAX_INPUT_CHARS * 0.85 ? " near-limit" : "");
+  }
+  els.sourceTextInput.addEventListener("input", updateCharCounter);
+  updateCharCounter();
+
+  // ── "Add to calendar" on preview step ────────────────────────────
+  document.getElementById("addToCalendarPreviewBtn")?.addEventListener("click", () => {
+    const task = readPreviewTask();
+    if (task.dueDate) {
+      import("../ics.js").then(({ downloadIcsFile }) => downloadIcsFile(task));
+    }
+  });
+
   els.sourceChips?.addEventListener("click", e => {
     const chip = e.target.closest("button.source-chip");
     if (!chip) return;
@@ -404,7 +424,8 @@ export function initCaptureScreen(options = {}) {
   els.addManualTaskBtn.addEventListener("click", openManualCapture);
 
   els.loadExampleBtn.addEventListener("click", () => {
-    els.sourceTextInput.value = "Hi, can you send Maya the updated project plan before our meeting tomorrow at 14:00? Thanks!";
+    els.sourceTextInput.value = "Hi Omer, please update the presentation and send it to Maya by Thursday evening. Daniel will review the business slide before submission.";
+    updateCharCounter();
   });
 
   els.previewForm.addEventListener("submit", handleSaveTask);

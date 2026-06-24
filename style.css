@@ -1,34 +1,38 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --bg: #eef3ff;
-  --bg-2: #f7f9ff;
-  --card: rgba(255, 255, 255, 0.86);
-  --card-solid: #ffffff;
-  --text: #111827;
-  --muted: #747d91;
-  --border: rgba(226, 232, 240, 0.9);
+  --bg: #F7FAFF;
+  --bg-2: #EEF3FF;
+  --card: #FFFFFF;
+  --card-solid: #FFFFFF;
+  --text: #07133A;
+  --muted: #66739A;
+  --border: #E3EAF7;
 
-  --primary: #6d5dfc;
-  --primary-dark: #4938d7;
-  --primary-soft: #edeaff;
+  --primary: #2563FF;
+  --primary-dark: #0B1B4D;
+  --primary-soft: #EEF3FF;
 
-  --purple-soft: #eeeaff;
+  --accent-cyan: #35CFFF;
+  --accent-green: #22C55E;
+  --accent-purple: #8B5CF6;
+
+  --purple-soft: #F3F0FF;
   --peach-soft: #fff1e8;
-  --blue-soft: #e5f6ff;
-  --green-soft: #eaf8ef;
+  --blue-soft: #EEF4FF;
+  --green-soft: #ECFDF5;
 
   --danger: #ef4444;
   --warning: #f59e0b;
-  --success: #22c55e;
+  --success: #22C55E;
 
-  --shadow: 0 20px 55px rgba(78, 94, 140, 0.14);
-  --soft-shadow: 0 12px 30px rgba(78, 94, 140, 0.1);
+  --shadow: 0 8px 32px rgba(37, 99, 255, 0.10);
+  --soft-shadow: 0 4px 16px rgba(37, 99, 255, 0.07);
 
-  --radius-xl: 30px;
-  --radius-lg: 24px;
-  --radius-md: 18px;
-  --radius-sm: 14px;
+  --radius-xl: 24px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
 }
 
 * {
@@ -42,10 +46,11 @@ html {
 body {
   margin: 0;
   font-family: "Plus Jakarta Sans", Arial, sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(193, 204, 255, 0.85), transparent 28%),
-    radial-gradient(circle at top right, rgba(221, 241, 255, 0.9), transparent 26%),
-    linear-gradient(180deg, var(--bg), var(--bg-2));
+  background: #F7FAFF;
+  background-image:
+    radial-gradient(ellipse 80% 55% at 0% 0%, rgba(37, 99, 255, 0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 35% at 100% 0%, rgba(53, 207, 255, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse 45% 40% at 50% 100%, rgba(37, 99, 255, 0.04) 0%, transparent 55%);
   color: var(--text);
   min-height: 100vh;
 }
@@ -62,7 +67,7 @@ button {
 }
 
 .app-shell {
-  width: min(100%, 1180px);
+  width: min(100%, 500px);
   margin: 0 auto;
   padding: 20px 16px 104px;
 }
@@ -243,8 +248,8 @@ main {
 
 .highlight-panel {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.78)),
-    radial-gradient(circle at top right, rgba(109, 93, 252, 0.12), transparent 38%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.92)),
+    radial-gradient(circle at top right, rgba(37, 99, 255, 0.08), transparent 38%);
 }
 
 .panel-header {
@@ -310,9 +315,9 @@ textarea {
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: rgba(109, 93, 252, 0.62);
+  border-color: rgba(37, 99, 255, 0.55);
   background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(109, 93, 252, 0.1);
+  box-shadow: 0 0 0 4px rgba(37, 99, 255, 0.09);
 }
 
 .capture-actions,
@@ -334,14 +339,15 @@ select:focus {
 }
 
 .primary-btn {
-  background: var(--primary);
+  background: linear-gradient(135deg, #2563FF 0%, #1d4ed8 100%);
   color: #ffffff;
-  box-shadow: 0 14px 28px rgba(109, 93, 252, 0.26);
+  box-shadow: 0 8px 24px rgba(37, 99, 255, 0.32);
 }
 
 .primary-btn:hover {
-  background: var(--primary-dark);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(37, 99, 255, 0.38);
 }
 
 .secondary-btn {
@@ -460,7 +466,7 @@ body[data-active-screen="onboarding"] .bottom-nav {
 
 .bottom-nav .nav-main.active {
   color: #ffffff;
-  background: #111827;
+  background: var(--primary-dark);
 }
 
 /* Tabs (used by the Tasks screen to switch between board and ownership) */
@@ -568,7 +574,7 @@ body[data-active-screen="onboarding"] .bottom-nav {
 .spinner {
   width: 21px;
   height: 21px;
-  border: 3px solid #d8d1ff;
+  border: 3px solid #c7d8ff;
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -622,8 +628,8 @@ body[data-active-screen="onboarding"] .bottom-nav {
 
 .priority-reason {
   background: var(--primary-soft);
-  border: 1px solid #ddd6fe;
-  color: #3c2a9d;
+  border: 1px solid #bdd0ff;
+  color: #1a3a8a;
   padding: 12px;
   border-radius: var(--radius-md);
   line-height: 1.45;
@@ -840,14 +846,8 @@ summary {
 }
 
 .bottom-nav .nav-main {
-  width: 54px;
-  height: 54px;
-  border-radius: 22px;
-  background: #111827;
+  background: var(--primary);
   color: #ffffff;
-  font-size: 1.5rem;
-  box-shadow: 0 12px 24px rgba(17, 24, 39, 0.22);
-  transform: translateY(-6px);
 }
 
 @media (min-width: 720px) {
@@ -938,6 +938,12 @@ body[data-active-screen="onboarding"] .app-shell {
   min-height: 100vh;
 }
 
+body[data-active-screen="welcome"] #mainAppHeader,
+body[data-active-screen="userentry"] #mainAppHeader,
+body[data-active-screen="onboarding"] #mainAppHeader {
+  display: none;
+}
+
 /* ── Home & nav screens: flex column layout ── */
 #homeScreen.is-active,
 #captureScreen.is-active,
@@ -971,13 +977,13 @@ body[data-active-screen="onboarding"] .app-shell {
 .brand-icon-lg {
   width: 62px;
   height: 62px;
-  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  background: linear-gradient(135deg, var(--primary), #60a5fa);
   border-radius: 22px;
   display: grid;
   place-items: center;
   color: #fff;
   font-size: 1.55rem;
-  box-shadow: 0 14px 32px rgba(109, 93, 252, 0.32);
+  box-shadow: 0 14px 32px rgba(37, 99, 255, 0.32);
 }
 
 .brand-title {
@@ -1141,7 +1147,7 @@ body[data-active-screen="onboarding"] .app-shell {
 
 .progress-track {
   height: 6px;
-  background: rgba(109, 93, 252, 0.15);
+  background: rgba(37, 99, 255, 0.15);
   border-radius: 999px;
   overflow: hidden;
   margin-bottom: 7px;
@@ -1181,7 +1187,7 @@ body[data-active-screen="onboarding"] .app-shell {
 }
 
 .completion-emoji {
-  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  background: linear-gradient(135deg, var(--primary), #60a5fa);
   color: #fff;
 }
 
@@ -1236,7 +1242,7 @@ body[data-active-screen="onboarding"] .app-shell {
   background: var(--primary);
   border-color: var(--primary);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(109, 93, 252, 0.25);
+  box-shadow: 0 4px 12px rgba(37, 99, 255, 0.25);
 }
 
 .chip-wide {
@@ -1307,9 +1313,9 @@ body[data-active-screen="onboarding"] .app-shell {
 }
 
 .source-chip {
-  background: rgba(109, 93, 252, 0.07);
+  background: rgba(37, 99, 255, 0.06);
   color: var(--primary-dark);
-  border: 1px solid rgba(109, 93, 252, 0.18);
+  border: 1px solid rgba(37, 99, 255, 0.16);
   border-radius: 999px;
   padding: 5px 11px;
   font-size: 0.76rem;
@@ -1324,8 +1330,8 @@ button.source-chip {
 }
 
 button.source-chip:hover {
-  background: rgba(109, 93, 252, 0.14);
-  border-color: rgba(109, 93, 252, 0.35);
+  background: rgba(37, 99, 255, 0.12);
+  border-color: rgba(37, 99, 255, 0.30);
 }
 
 button.source-chip.selected {
@@ -1427,7 +1433,7 @@ button.source-chip.selected {
 
 /* ── Recommended / top-priority task highlight ── */
 .task-card.top-priority {
-  border-color: rgba(109, 93, 252, 0.28);
+  border-color: rgba(37, 99, 255, 0.28);
   background: linear-gradient(180deg, #fff, rgba(237, 234, 255, 0.45));
 }
 
@@ -1489,7 +1495,7 @@ button.source-chip.selected {
 .profile-avatar {
   width: 54px;
   height: 54px;
-  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  background: linear-gradient(135deg, var(--primary), #60a5fa);
   border-radius: 20px;
   display: grid;
   place-items: center;
@@ -1535,7 +1541,7 @@ button.source-chip.selected {
 .chip-tag {
   background: var(--primary-soft);
   color: var(--primary-dark);
-  border: 1px solid rgba(109, 93, 252, 0.22);
+  border: 1px solid rgba(37, 99, 255, 0.22);
   border-radius: 999px;
   padding: 5px 13px;
   font-size: 0.8rem;
@@ -1663,11 +1669,11 @@ body {
 .tw-logo-icon {
   width: 72px;
   height: 72px;
-  background: linear-gradient(135deg, var(--primary) 0%, #9b8bff 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%);
   border-radius: 24px;
   display: grid;
   place-items: center;
-  box-shadow: 0 18px 40px rgba(109, 93, 252, 0.32);
+  box-shadow: 0 18px 40px rgba(37, 99, 255, 0.32);
   flex-shrink: 0;
 }
 
@@ -1701,7 +1707,7 @@ body {
 
 /* ── Tw monogram used in onboarding step-emoji slots ── */
 .step-emoji.tw-step-mark {
-  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  background: linear-gradient(135deg, var(--primary), #60a5fa);
   color: #ffffff;
   font-family: "Plus Jakarta Sans", sans-serif;
   font-weight: 800;
@@ -1710,13 +1716,13 @@ body {
 }
 
 .step-emoji.completion-mark {
-  box-shadow: 0 12px 28px rgba(109, 93, 252, 0.35);
+  box-shadow: 0 12px 28px rgba(37, 99, 255, 0.35);
 }
 
 /* ── Welcome v2 screen ── */
 .welcome-v2 {
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(109, 93, 252, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 0%, rgba(37, 99, 255, 0.12) 0%, transparent 60%),
     linear-gradient(180deg, #f0f0ff 0%, #f8fafc 40%);
   gap: 30px;
 }
@@ -1791,14 +1797,14 @@ body {
   border-color: var(--primary);
   background: var(--primary-soft);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(109, 93, 252, 0.18);
+  box-shadow: 0 8px 20px rgba(37, 99, 255, 0.18);
 }
 
 .role-card.selected {
   border-color: var(--primary);
-  background: linear-gradient(135deg, var(--primary-soft), #ddd6fe);
+  background: linear-gradient(135deg, var(--primary-soft), #bdd0ff);
   color: var(--primary-dark);
-  box-shadow: 0 6px 20px rgba(109, 93, 252, 0.22);
+  box-shadow: 0 6px 20px rgba(37, 99, 255, 0.22);
 }
 
 .role-card-icon {
@@ -1847,12 +1853,12 @@ body {
 
 .accordion-card .section-heading.accordion-trigger:hover {
   background: var(--primary-soft);
-  border-color: rgba(109, 93, 252, 0.28);
+  border-color: rgba(37, 99, 255, 0.28);
 }
 
 .accordion-card.accordion-open .section-heading.accordion-trigger {
   background: var(--primary-soft);
-  border-color: rgba(109, 93, 252, 0.35);
+  border-color: rgba(37, 99, 255, 0.35);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   border-bottom-color: transparent;
 }
@@ -1875,7 +1881,7 @@ body {
   display: none;
   padding: 16px;
   background: rgba(249, 250, 252, 0.85);
-  border: 1.5px solid rgba(109, 93, 252, 0.25);
+  border: 1.5px solid rgba(37, 99, 255, 0.25);
   border-top: 0;
   border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
@@ -1909,17 +1915,13 @@ body {
 .nav-label { font-size: 0.62rem; font-weight: 700; display: block; line-height: 1; }
 
 .bottom-nav .nav-main {
-  width: auto;
-  height: auto;
-  min-width: 64px;
-  padding: 10px 18px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--primary), #9b8bff);
+  background: var(--primary);
   color: #ffffff;
-  font-size: inherit;
-  transform: translateY(-11px);
-  box-shadow: 0 8px 22px rgba(109, 93, 252, 0.36);
-  flex: 0 0 auto;
+  transform: none;
+  box-shadow: none;
+  border-radius: 99px;
+  min-width: 0;
+  padding: 6px 14px;
 }
 
 .bottom-nav button.active {
@@ -1975,4 +1977,729 @@ body {
   .role-card-full {
     grid-column: auto;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REDESIGN 2.0 — Blue/White clean premium AI productivity app
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Decorative background blobs (fixed, full viewport) ── */
+.bg-blobs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+}
+.bg-blob-1 {
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, rgba(37,99,255,0.12), transparent 70%);
+  top: -80px; left: -100px;
+}
+.bg-blob-2 {
+  width: 320px; height: 320px;
+  background: radial-gradient(circle, rgba(53,207,255,0.10), transparent 70%);
+  top: -40px; right: -80px;
+}
+.bg-blob-3 {
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(37,99,255,0.07), transparent 70%);
+  bottom: 80px; left: 50%;
+  transform: translateX(-50%);
+}
+.app-shell { position: relative; z-index: 1; }
+
+/* ── Main app header (home/capture/shared/profile) ── */
+.main-app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 8px;
+  margin-bottom: 4px;
+}
+.main-app-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+}
+.main-app-logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--primary), #60a5fa);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 255, 0.28);
+  flex-shrink: 0;
+}
+.main-app-logo-icon svg {
+  display: block;
+}
+.main-app-logo-name {
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+.main-app-logo-name strong { color: var(--primary); font-weight: 800; }
+.main-app-menu-btn {
+  width: 38px; height: 38px;
+  border: 1.5px solid var(--border);
+  background: #ffffff;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(37, 99, 255, 0.06);
+  transition: background 0.15s;
+}
+.main-app-menu-btn:hover { background: var(--primary-soft); color: var(--primary); }
+
+/* ── Capture hero section ── */
+.capture-hero {
+  padding: 12px 0 20px;
+  text-align: left;
+}
+.capture-hero-title {
+  margin: 0 0 6px;
+  font-size: clamp(3rem, 14vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+  color: var(--primary-dark);
+}
+.capture-hero-title .dot {
+  color: var(--primary);
+}
+.capture-hero-sub {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── Step row (numbered labels) ── */
+.step-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.step-badge {
+  width: 26px; height: 26px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.75rem;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.step-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+/* ── Textarea wrapper with char counter ── */
+.textarea-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+.textarea-wrap textarea {
+  margin-bottom: 0;
+  padding-bottom: 28px;
+}
+.char-counter {
+  position: absolute;
+  bottom: 10px;
+  right: 13px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  pointer-events: none;
+  line-height: 1;
+}
+.char-counter.near-limit { color: var(--warning); }
+.char-counter.at-limit   { color: var(--danger); }
+
+/* ── Source row (label + chips inline) ── */
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.source-row-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── CTA button: full-width, tall, blue gradient ── */
+.cta-btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 1rem;
+  font-weight: 800;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+.cta-btn .btn-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* ── Capture secondary actions (below CTA) ── */
+.capture-secondary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.capture-secondary .secondary-btn,
+.capture-secondary .ghost-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 0.84rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Context status: keep functional but visually minimal ── */
+.context-status-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* ── Extraction header (step 2) ── */
+.extraction-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.extraction-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Bottom action row (Save tasks + Add to calendar) ── */
+.bottom-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.save-tasks-btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 1rem;
+  font-weight: 800;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #2563FF 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 8px 24px rgba(37, 99, 255, 0.30);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  cursor: pointer;
+}
+.save-tasks-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(37, 99, 255, 0.38);
+}
+.calendar-btn {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 0.96rem;
+  font-weight: 700;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ffffff;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+  box-shadow: 0 2px 8px rgba(37, 99, 255, 0.08);
+  transition: background 0.15s, transform 0.16s ease;
+  cursor: pointer;
+}
+.calendar-btn:hover {
+  background: var(--primary-soft);
+  transform: translateY(-1px);
+}
+
+/* ── Loading state: more prominent ── */
+.loading-state {
+  background: var(--primary-soft);
+  border: 1px solid rgba(37, 99, 255, 0.15);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  gap: 12px;
+  color: var(--primary-dark);
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+.loading-state .spinner {
+  flex-shrink: 0;
+}
+.loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.loading-text-main {
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+.loading-text-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* ── Panel: remove backdrop blur (solid white is cleaner) ── */
+.panel {
+  backdrop-filter: none;
+}
+
+/* ── Capture panel: no highlight gradient needed, just white ── */
+.capture-panel.highlight-panel {
+  background: #ffffff;
+  border: 1.5px solid var(--border);
+}
+
+/* ── Welcome screen logo: update tw-logo for blue ── */
+.tw-logo-icon {
+  background: linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%);
+  box-shadow: 0 10px 28px rgba(37, 99, 255, 0.28);
+}
+
+/* ── Home screen greeting tweaks ── */
+.home-greeting {
+  padding-top: 8px;
+}
+.greeting-title {
+  font-size: clamp(1.5rem, 7vw, 2rem);
+  letter-spacing: -0.05em;
+  margin: 0 0 4px;
+}
+
+/* ── Panel header: smaller h2 ── */
+.panel-header h2 {
+  font-size: 1.2rem;
+  letter-spacing: -0.045em;
+}
+
+/* ── Task card: update border/checkbox dot color ── */
+.task-card::before {
+  border-color: var(--primary);
+}
+.task-card {
+  border-color: var(--border);
+}
+
+/* ── Priority reason box: blue ── */
+.priority-reason {
+  background: var(--primary-soft);
+  border-color: #c7d8ff;
+  color: #1a3a8a;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   QA FIXES + UI POLISH PASS
+   ══════════════════════════════════════════════════════════════ */
+
+/* Fix: remove focus outline on programmatically focused headings */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* Fix: welcome-v2 background → pure blue, no purple */
+.welcome-v2 {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(37, 99, 255, 0.11) 0%, transparent 55%),
+    linear-gradient(180deg, #f0f4ff 0%, #f7faff 50%, #ffffff 100%);
+}
+
+/* Enhancement: capture hero title gets a rich blue gradient */
+.capture-hero-title {
+  background: linear-gradient(135deg, #0B1B4D 0%, #2563FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.capture-hero-title .dot {
+  background: linear-gradient(135deg, #2563FF, #35CFFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhancement: step connector line between step badges */
+.step-row + .step-row {
+  margin-top: 12px;
+}
+
+/* Enhancement: stat buttons – add color accents */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.stat-btn {
+  border: 1.5px solid var(--border);
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 12px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: var(--soft-shadow);
+}
+.stat-btn:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 16px rgba(37, 99, 255, 0.12);
+}
+.stat-btn strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: var(--text);
+  display: block;
+  line-height: 1;
+}
+.stat-btn span {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.2;
+}
+.stat-btn.overdue-stat strong { color: var(--danger); }
+.stat-btn.done-stat strong   { color: var(--accent-green); }
+
+/* Enhancement: task card — richer look */
+.task-card {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.task-card:hover {
+  border-color: rgba(37, 99, 255, 0.25);
+  box-shadow: 0 6px 24px rgba(37, 99, 255, 0.10);
+}
+.task-card h3 {
+  font-size: 0.97rem;
+  color: var(--text);
+}
+
+/* Enhancement: task card checkbox — proper circle */
+.task-card::before {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  background: transparent;
+  top: 19px;
+  left: 14px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.task-card.done::before {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+}
+
+/* Enhancement: home greeting – bolder, nicer */
+.home-greeting {
+  padding: 4px 0 2px;
+}
+.greeting-title {
+  font-size: clamp(1.6rem, 7vw, 2.1rem);
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhancement: eyebrow labels – blue underline accent */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+/* Enhancement: panel h3 headings */
+.panel-h3 {
+  font-size: 1.05rem;
+  letter-spacing: -0.035em;
+  margin: 4px 0 0;
+  color: var(--text);
+}
+
+/* Enhancement: loading state sparkle animation */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.loading-text-sub {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+/* Enhancement: primary btn – slight rounded corners (not pill) for CTA */
+.cta-btn {
+  border-radius: 16px !important;
+}
+
+/* Fix: ghost-btn border should be subtle */
+.ghost-btn {
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  background: rgba(255,255,255,0.8);
+}
+
+/* Enhancement: source chip — tighter, cleaner */
+.source-chip {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 11px;
+  border-radius: 99px;
+}
+
+/* Enhancement: info-box — blue styling */
+.info-box {
+  background: var(--primary-soft);
+  border-color: rgba(37, 99, 255, 0.2);
+  color: var(--primary-dark);
+}
+
+/* Fix: welcome pill items – updated blue border */
+.source-pill-item {
+  border-color: rgba(37, 99, 255, 0.15);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+/* Enhancement: smooth panel entrance */
+.panel {
+  transition: box-shadow 0.2s;
+}
+
+/* Enhancement: form inputs – better styling */
+input, textarea, select {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fafbff;
+  font-size: 0.93rem;
+}
+input:focus, textarea:focus, select:focus {
+  background: #ffffff;
+  border-color: var(--primary);
+}
+
+/* Enhancement: bottom nav – updated active state color */
+.bottom-nav button.active {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.bottom-nav .nav-main {
+  background: linear-gradient(135deg, var(--primary), #60a5fa);
+  box-shadow: 0 4px 12px rgba(37, 99, 255, 0.28);
+}
+
+/* Fix: form-grid 2-column at >= 720px */
+@media (min-width: 500px) {
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Enhancement: preview panel step-3 header has subtle top border */
+.preview-panel .step-row:first-child {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+/* Enhancement: capture panel – add subtle top gradient stripe */
+.capture-panel {
+  border-top: 3px solid var(--primary);
+}
+
+/* Fix: remove desktop 980px padding override for 500px app-shell */
+@media (min-width: 980px) {
+  .app-shell {
+    padding: 24px 20px 104px;
+  }
+  .main-grid, .board-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Enhancement: textarea placeholder color */
+textarea::placeholder, input::placeholder {
+  color: #a0abc0;
+  font-size: 0.9rem;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   OVERFLOW FIXES + FINAL POLISH
+   ══════════════════════════════════════════════════════════════ */
+
+/* Fix: source-chips inside source-row must wrap and take remaining width */
+.source-row .source-chips {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+/* Fix: step-row with status pill — prevent overflow, allow pill to shrink */
+.step-row .status-pill {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+/* Fix: extraction-header alignment */
+.extraction-header {
+  padding: 12px 0 8px;
+  overflow: hidden;
+}
+.extraction-count {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Fix: form label color consistency */
+label, .input-label {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.84rem;
+}
+
+/* Fix: remove duplicate stats-row / stat-btn overrides that could conflict */
+/* (the original rules at lines ~1355-1410 are the canonical ones) */
+
+/* Enhancement: capture hero decoration */
+.capture-hero {
+  position: relative;
+}
+.capture-hero::before {
+  content: "✦";
+  position: absolute;
+  right: 0;
+  top: 8px;
+  font-size: 1.4rem;
+  color: var(--accent-cyan);
+  opacity: 0.5;
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(15deg); }
+}
+
+/* Enhancement: preview panel — clean step-3 header */
+.preview-panel .step-row:first-child {
+  border-bottom: 1.5px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+/* Enhancement: form inputs — more distinct filled state */
+input:not(:placeholder-shown),
+textarea:not(:placeholder-shown),
+select {
+  background: #ffffff;
+  border-color: rgba(37, 99, 255, 0.2);
+}
+
+/* Enhancement: secondary-btn with slightly visible border */
+.secondary-btn {
+  border: 1.5px solid rgba(37, 99, 255, 0.2);
+}
+
+/* Enhancement: bottom nav – remove purple from earlier rules */
+.bottom-nav button.active {
+  color: var(--primary) !important;
+  background: var(--primary-soft) !important;
+}
+.bottom-nav .nav-main {
+  background: linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 255, 0.30) !important;
+}
+
+/* Fix: media query for wider desktop layout */
+@media (min-width: 720px) {
+  .app-shell {
+    padding: 24px 20px 104px;
+  }
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FINAL SPECIFICITY FIXES
+   ══════════════════════════════════════════════════════════════ */
+
+/* Fix: nav-main always shows gradient, even when .active is also set */
+.bottom-nav .nav-main,
+.bottom-nav .nav-main.active {
+  background: linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 255, 0.28) !important;
+}
+
+/* Fix: hide context status pill visually — keep in DOM for JS, 
+   move to a subtle below-fold position */
+#contextStatus {
+  display: none;
 }

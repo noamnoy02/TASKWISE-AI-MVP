@@ -10,7 +10,34 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Decorative background blobs -->
+  <div class="bg-blobs" aria-hidden="true">
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+    <div class="bg-blob bg-blob-3"></div>
+  </div>
+
   <div class="app-shell">
+    <!-- Global app header (hidden on pre-nav screens via CSS) -->
+    <header class="main-app-header" id="mainAppHeader">
+      <a class="main-app-logo" href="#" aria-label="TaskWise home">
+        <div class="main-app-logo-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M4 10.5L8 14.5L16 6" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 2.5L11.5 1L13 2.5" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+          </svg>
+        </div>
+        <span class="main-app-logo-name">Task<strong>Wise</strong></span>
+      </a>
+      <button class="main-app-menu-btn" type="button" aria-label="Menu" title="Menu">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="8" cy="4" r="1.5" fill="currentColor"/>
+          <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+          <circle cx="8" cy="12" r="1.5" fill="currentColor"/>
+        </svg>
+      </button>
+    </header>
+
     <main>
 
       <!-- ═══════════════════════════════════════
@@ -22,7 +49,11 @@
         <div class="fullscreen-center welcome-v2">
           <div class="tw-logo-wrap">
             <div class="tw-logo-icon">
-              <span class="tw-logo-text">Tw</span>
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+                <path d="M8 19L15 26L28 10" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M22 6L24 4L26 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+                <path d="M28 10L30 8" stroke="white" stroke-width="1.8" stroke-linecap="round" opacity="0.55"/>
+              </svg>
             </div>
             <span class="tw-app-name">TaskWise</span>
           </div>
@@ -655,20 +686,24 @@
               <p class="muted capture-intro">Paste a WhatsApp message, email, meeting invite, reminder or note. TaskWise will identify the action, category, deadline, and missing information.</p>
             </div>
           </div>
-          <div class="source-chips" id="homeSourceChips">
-            <span class="source-chip">💬 WhatsApp</span>
-            <span class="source-chip">✉️ Gmail</span>
-            <span class="source-chip">📧 Outlook</span>
-            <span class="source-chip">📅 Calendar</span>
-            <span class="source-chip">📝 Notes</span>
-            <span class="source-chip">+ Other</span>
+          <div class="textarea-wrap" style="margin-bottom:10px;">
+            <textarea id="homeQuickCapture" rows="3"
+              placeholder="Paste a message, email, invite or reminder here…"></textarea>
           </div>
-          <textarea id="homeQuickCapture" rows="3"
-            placeholder="Paste a message, email, invite or reminder here…"></textarea>
-          <p class="capture-example">Example: "Send the final report to Harel for Survey X by Thursday."</p>
+          <div class="source-row" style="margin-bottom:12px;">
+            <span class="source-row-label">Source:</span>
+            <div class="source-chips" id="homeSourceChips">
+              <span class="source-chip">💬 Message</span>
+              <span class="source-chip">✉️ Email</span>
+              <span class="source-chip">📅 Calendar</span>
+              <span class="source-chip">+ Other</span>
+            </div>
+          </div>
           <div class="capture-actions">
-            <button id="homeCreateTaskBtn" class="primary-btn" type="button">✨ Create Task with AI</button>
-            <button id="homeAddManualBtn" class="secondary-btn" type="button">Add task manually</button>
+            <button id="homeCreateTaskBtn" class="primary-btn cta-btn" type="button">
+              <span class="btn-icon">✦</span> Turn into a task
+            </button>
+            <button id="homeAddManualBtn" class="secondary-btn" type="button" style="justify-content:center;">Add manually</button>
           </div>
         </section>
 
@@ -730,35 +765,56 @@
       <section id="captureScreen" class="screen" data-screen="capture">
 
         <div id="captureStep">
+          <!-- Hero text -->
+          <div class="capture-hero">
+            <h1 class="capture-hero-title">Paste<span class="dot">.</span></h1>
+            <p class="capture-hero-sub">Drop in the message. Let TaskWise take it from there.</p>
+          </div>
+
           <section class="panel capture-panel highlight-panel">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Smart Capture</p>
-                <h2>Create a task from any text</h2>
-                <p class="muted">Paste a message, email, invite or reminder. The AI will extract the task details for you.</p>
+            <!-- Step 1 label -->
+            <div class="step-row">
+              <span class="step-badge">1</span>
+              <span class="step-label">Paste text</span>
+              <span id="contextStatus" class="status-pill" style="margin-left:auto;font-size:0.7rem;">No context</span>
+            </div>
+
+            <!-- Textarea with char counter -->
+            <div class="textarea-wrap">
+              <textarea id="sourceTextInput" rows="6"
+                placeholder="Hi Omer, please update the presentation and send it to Maya by Thursday evening. Daniel will review the business slide before submission."></textarea>
+              <span id="charCounter" class="char-counter">0 / 4000</span>
+            </div>
+
+            <!-- Source chips -->
+            <div class="source-row">
+              <span class="source-row-label">Source:</span>
+              <div class="source-chips" id="captureSourceChips">
+                <button class="source-chip" type="button" data-source="Message">💬 Message</button>
+                <button class="source-chip" type="button" data-source="Email">✉️ Email</button>
+                <button class="source-chip" type="button" data-source="Calendar">📅 Calendar</button>
+                <button class="source-chip" type="button" data-source="Other">+ Other</button>
               </div>
-              <span id="contextStatus" class="status-pill">No context yet</span>
             </div>
-            <div class="source-chips" id="captureSourceChips">
-              <button class="source-chip" type="button" data-source="WhatsApp">💬 WhatsApp</button>
-              <button class="source-chip" type="button" data-source="Gmail">✉️ Gmail</button>
-              <button class="source-chip" type="button" data-source="Outlook">📧 Outlook</button>
-              <button class="source-chip" type="button" data-source="Calendar">📅 Calendar</button>
-              <button class="source-chip" type="button" data-source="Notes">📝 Notes</button>
-              <button class="source-chip" type="button" data-source="Other">+ Other</button>
-            </div>
-            <label for="sourceTextInput" class="input-label">Source text</label>
-            <textarea id="sourceTextInput" rows="6"
-              placeholder="Paste a message, email, invitation, or reminder here…"></textarea>
-            <p class="capture-example">Example: "Send the final report to Harel for survey X by Thursday."</p>
-            <div class="capture-actions">
-              <button id="createTaskBtn" class="primary-btn" type="button">Create Task with AI</button>
-              <button id="addManualTaskBtn" class="secondary-btn" type="button">Add task manually</button>
+
+            <!-- Primary CTA -->
+            <button id="createTaskBtn" class="primary-btn cta-btn" type="button">
+              <span class="btn-icon">✦</span> Turn into a task
+            </button>
+
+            <!-- Secondary actions -->
+            <div class="capture-secondary">
+              <button id="addManualTaskBtn" class="secondary-btn" type="button">Add manually</button>
               <button id="loadExampleBtn" class="ghost-btn" type="button">Load example</button>
             </div>
+
+            <!-- Loading state -->
             <div id="loadingState" class="loading-state hidden">
               <div class="spinner"></div>
-              <span>AI is analyzing the text…</span>
+              <div class="loading-text">
+                <span class="loading-text-main">Reading the message…</span>
+                <span class="loading-text-sub">Finding tasks, dates, owners and context…</span>
+              </div>
             </div>
             <div id="infoState" class="info-box hidden"></div>
             <div id="errorState" class="error-box hidden"></div>
@@ -766,14 +822,20 @@
         </div>
 
         <div id="previewStep" class="hidden">
+          <!-- Step 2 header -->
+          <div class="extraction-header">
+            <div class="step-row" style="margin-bottom:0">
+              <span class="step-badge">2</span>
+              <span class="step-label">AI task extraction</span>
+            </div>
+            <span class="extraction-count" id="aiSourceBadge">✦ AI result</span>
+          </div>
+
           <section class="panel preview-panel">
-            <div class="panel-header">
-              <div>
-                <p class="eyebrow">Editable Preview</p>
-                <h2>Review before saving</h2>
-                <p class="muted">Edit anything the AI extracted before adding it to your tasks.</p>
-              </div>
-              <span id="aiSourceBadge" class="status-pill">AI result</span>
+            <!-- Step 3 header -->
+            <div class="step-row">
+              <span class="step-badge">3</span>
+              <span class="step-label">Preview &amp; edit</span>
             </div>
             <form id="previewForm" class="form-grid">
               <label class="full-width">
@@ -867,9 +929,14 @@
                 Priority reason
                 <textarea id="previewPriorityReason" rows="2"></textarea>
               </label>
-              <div class="form-actions full-width">
-                <button class="primary-btn" type="submit">Save Task</button>
-                <button id="cancelPreviewBtn" class="secondary-btn" type="button">Cancel</button>
+              <div class="bottom-actions full-width">
+                <button class="save-tasks-btn" type="submit">
+                  <span>📌</span> Save tasks
+                </button>
+                <button class="calendar-btn" type="button" id="addToCalendarPreviewBtn">
+                  <span>📅</span> Add to calendar
+                </button>
+                <button id="cancelPreviewBtn" class="ghost-btn" type="button" style="width:100%;text-align:center;justify-content:center;display:flex;padding:10px;">← Back</button>
               </div>
             </form>
           </section>
