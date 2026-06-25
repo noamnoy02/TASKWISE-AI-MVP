@@ -9,15 +9,14 @@ function notifyProfileChange() { profileChangeListeners.forEach(fn => fn()); }
 // ── Step identifiers ──────────────────────────────────────────────────
 const STEP_IDS = {
   intro:   "ob-intro",
-  role:    "ob-role",
   areas:   "ob-areas",
   context: "ob-context",
   tasks:   "ob-tasks",
   done:    "ob-done"
 };
-const STEP_ORDER = ["intro", "role", "areas", "context", "tasks", "done"];
-// Progress counts content steps (role through done)
-const PROGRESS_STEPS = ["role", "areas", "context", "tasks", "done"];
+const STEP_ORDER = ["intro", "areas", "context", "tasks", "done"];
+// Progress counts content steps (areas through done)
+const PROGRESS_STEPS = ["areas", "context", "tasks", "done"];
 const AREA_TO_SECTION = {
   Work:     "ctx-work",
   Studies:  "ctx-studies",
@@ -33,7 +32,6 @@ let currentStep = "intro";
 let onComplete = null;
 
 const data = {
-  userRole: null,
   lifeAreas: [],
   workContext: emptyWorkCtx(),
   studyContext: emptyStudyCtx(),
@@ -415,28 +413,18 @@ function validateContextOther() {
 
 function advance() {
   if (currentStep === "intro") {
-    goToStep("role");
-    return;
-  }
-
-  if (currentStep === "role") {
-    const selected = el("roleCards")?.querySelector(".role-card.selected");
-    if (!selected) {
-      el("roleError")?.classList.remove("hidden");
-      return;
-    }
-    el("roleError")?.classList.add("hidden");
-    data.userRole = selected.dataset.value;
     goToStep("areas");
     return;
   }
 
   if (currentStep === "areas") {
-    const selected = getChipValues("lifeAreasChips");
+    const selected = getChipValues("lifeAreasChips").filter(v => v !== "Other");
+    const otherCustom = getOtherChipCustom("lifeAreasChips", "lifeAreasOther");
+    const allAreas = [...selected, ...otherCustom];
     const errEl = el("lifeAreasError");
-    if (!selected.length) { errEl?.classList.remove("hidden"); return; }
+    if (!allAreas.length) { errEl?.classList.remove("hidden"); return; }
     errEl?.classList.add("hidden");
-    data.lifeAreas = selected;
+    data.lifeAreas = allAreas;
     showContextSections();
     goToStep("context");
     return;
@@ -472,7 +460,6 @@ function finishOnboarding() {
     username: user?.identifier || "",
     email: user?.isEmail ? user.identifier : "",
     displayName: user?.displayName || user?.identifier || "",
-    userRole: data.userRole || null,
     lifeAreas: [...data.lifeAreas],
     workContext: { ...data.workContext },
     studyContext: { ...data.studyContext },
@@ -496,7 +483,6 @@ function finishOnboarding() {
 // Reads old schema fields and maps them into the new data object.
 
 function migrateOldProfile(p) {
-  data.userRole = p.userRole || null;
   data.lifeAreas = p.lifeAreas || [];
 
   // Work
@@ -570,15 +556,9 @@ function populateFromProfile() {
 
   migrateOldProfile(p);
 
-  // Role
-  if (data.userRole) {
-    document.querySelectorAll("#ob-role .role-card").forEach(card => {
-      card.classList.toggle("selected", card.dataset.value === data.userRole);
-    });
-  }
-
-  // Life areas
-  restoreChipGroup("lifeAreasChips", data.lifeAreas);
+  // Life areas (restore standard areas; custom "Other" values won't map back to chips)
+  const standardAreas = ["Work", "Studies", "Family", "Home", "Personal", "Health", "Finances"];
+  restoreChipGroup("lifeAreasChips", data.lifeAreas.filter(a => standardAreas.includes(a)));
 
   // Work
   setVal("ctxWorkIndustry", data.workContext.industry || "");
@@ -698,8 +678,8 @@ export function openOnboardingForEdit(callback) {
 export function initOnboardingScreen(options = {}) {
   onComplete = options.onComplete || null;
 
-  // Life areas chip group (no "Other" chip)
-  initChipGroup("lifeAreasChips");
+  // Life areas chip group — has an "Other" chip with free-text
+  initChipGroup("lifeAreasChips", "lifeAreasOtherWrap", "lifeAreasOther");
 
   // Responsibility chip groups — each has an "Other" chip
   initChipGroup("familyRespChips", "familyRespOtherWrap", "familyRespOther");
@@ -725,18 +705,8 @@ export function initOnboardingScreen(options = {}) {
   // Accordion for context sections
   initContextAccordions();
 
-  // Role card single-select
-  document.querySelectorAll("#ob-role .role-card").forEach(card => {
-    card.addEventListener("click", () => {
-      document.querySelectorAll("#ob-role .role-card").forEach(c => c.classList.remove("selected"));
-      card.classList.add("selected");
-      el("roleError")?.classList.add("hidden");
-    });
-  });
-
   // Navigation buttons
   el("obIntroBtn")?.addEventListener("click", advance);
-  el("obRoleBtn")?.addEventListener("click", advance);
   el("obAreasBtn")?.addEventListener("click", advance);
   el("obContextBtn")?.addEventListener("click", advance);
   el("obContextSkipBtn")?.addEventListener("click", () => {

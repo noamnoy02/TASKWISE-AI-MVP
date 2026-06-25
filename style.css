@@ -947,7 +947,8 @@ body[data-active-screen="onboarding"] #mainAppHeader {
 /* ── Home & nav screens: flex column layout ── */
 #homeScreen.is-active,
 #captureScreen.is-active,
-#sharedScreen.is-active,
+#tasksScreen.is-active,
+#calendarScreen.is-active,
 #profileScreen.is-active {
   display: flex;
   flex-direction: column;
@@ -1595,8 +1596,11 @@ button.source-chip.selected {
 }
 
 .nav-icon {
-  font-size: 1.15rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
 }
 
 .nav-label {
@@ -1911,7 +1915,8 @@ body {
   flex: 0 0 auto;
 }
 
-.nav-icon { font-size: 1.15rem; line-height: 1; display: block; }
+.nav-icon { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+.nav-icon svg { display: block; }
 .nav-label { font-size: 0.62rem; font-weight: 700; display: block; line-height: 1; }
 
 .bottom-nav .nav-main {
@@ -2702,4 +2707,215 @@ select {
    move to a subtle below-fold position */
 #contextStatus {
   display: none;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   DEMO DAY REFINEMENTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* Category chip panel */
+.category-prompt {
+  background: transparent;
+  border: none;
+  padding: 0;
+  grid-column: 1 / -1;
+}
+.category-prompt-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  display: block;
+}
+.category-prompt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.cat-chip {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 99px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cat-chip:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.cat-chip.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* Missing info display */
+.missing-info-display {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  min-height: 28px;
+  padding: 2px 0;
+}
+.missing-label {
+  font-weight: 700;
+  color: var(--muted);
+}
+.missing-chip {
+  background: #FFF7ED;
+  border: 1.5px solid #FED7AA;
+  color: #C2410C;
+  border-radius: 99px;
+  padding: 3px 10px;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+.missing-ok {
+  color: #15803D;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+.missing-ok::before { content: ""; }
+
+/* Past date warning */
+.warning-box {
+  background: #FFFBEB;
+  border: 1.5px solid #FCD34D;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: #92400E;
+  font-weight: 600;
+}
+
+/* Onboarding: hide ob-role references */
+#ob-role { display: none !important; }
+
+/* Life areas "Other" custom input spacing */
+#lifeAreasOtherWrap {
+  margin-top: 10px;
+}
+
+/* Smart Capture: shorter hero on small viewports */
+.capture-hero-title {
+  font-size: clamp(2rem, 8vw, 3.2rem);
+}
+
+/* ── Source brand icons ── */
+.source-brand-icon {
+  width: 15px;
+  height: 15px;
+  vertical-align: middle;
+  margin-right: 5px;
+  display: inline-block;
+  pointer-events: none;
+}
+
+/* ── Calendar export bar ── */
+.calendar-export-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 0 4px;
+}
+.calendar-export-bar .secondary-btn {
+  font-size: 0.78rem;
+  padding: 7px 14px;
+}
+
+/* ── Calendar agenda items with checkbox ── */
+.agenda-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.agenda-item:last-child { border-bottom: none; }
+.agenda-check-wrap { flex-shrink: 0; cursor: pointer; }
+.agenda-check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+.agenda-info { flex: 1; min-width: 0; }
+.agenda-title { font-weight: 600; font-size: 0.9rem; margin: 0 0 2px; }
+.agenda-meta  { font-size: 0.75rem; color: var(--muted); margin: 0; }
+
+/* ── Header three-dot dropdown menu ── */
+.main-app-header {
+  position: relative;
+}
+.app-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 12px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+  border: 1px solid var(--border);
+  z-index: 300;
+  min-width: 190px;
+  overflow: hidden;
+  animation: menuFadeIn 0.12s ease;
+}
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.menu-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 12px 18px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.menu-dropdown-item:hover { background: var(--surface); }
+.menu-dropdown-item.danger { color: var(--danger); }
+.menu-divider { height: 1px; background: var(--border); margin: 2px 0; }
+
+/* Inline SVG brand icons — pointer-events:none prevents shadow-DOM
+   click targets that break closest("button.source-chip") traversal */
+svg.source-brand-icon {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 5px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* ── Safe area / iPhone notch support ─────────────────────────────── */
+/* viewport-fit=cover lets content go edge-to-edge; these rules pull
+   the nav up above the home-indicator bar on notch devices           */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .bottom-nav {
+    bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+  .app-shell {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+  @media (max-width: 420px) {
+    .app-shell {
+      padding-bottom: calc(98px + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* ── Mobile keyboard: hide nav when viewport is very short (keyboard open) */
+@media (max-height: 420px) and (pointer: coarse) {
+  .bottom-nav {
+    display: none;
+  }
 }

@@ -1,8 +1,11 @@
 export async function analyzeTaskWithAI({ sourceText, sourceType, profile }) {
+  const now = new Date();
   const payload = {
     sourceText,
     sourceType: sourceType || null,
-    relevantContext: buildRelevantContext(profile)
+    relevantContext: buildRelevantContext(profile),
+    currentDate: now.toISOString().split("T")[0],
+    currentDay: now.toLocaleDateString("en-US", { weekday: "long" })
   };
 
   let response;

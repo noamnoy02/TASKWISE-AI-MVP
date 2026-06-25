@@ -1,100 +1,94 @@
 const OPENAI_API_URL = "https://api.openai.com/v1/responses";
 const MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const MAX_INPUT_CHARS = 4000;
-const MAX_OUTPUT_TOKENS = 700;
+const MAX_OUTPUT_TOKENS = 800;
 
 // ── Server-side system prompt ─────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are the task-understanding engine of a smart task-management application.
+const SYSTEM_PROMPT = `You are the task-understanding engine of a smart task-management application called TaskWise.
 
 Convert unstructured messages, emails, reminders, invitations, and notes into one structured task.
+The current date and day of week will be provided in every request — use them to resolve relative dates.
 
-Your goal is to understand what the user actually needs to do and turn it into a clear next action.
-
-Return valid JSON only. Do not return Markdown, explanations, comments, or text outside the JSON object.
+Return valid JSON only. No Markdown, no explanations, no text outside the JSON object.
 
 ### Task title
 
-Generate a new, clear, natural, polished, and action-oriented task title that would look good in a task-management app.
-
-Do not copy the complete original message as the title unless the source is already a short action-oriented task.
-
-The title should:
-
-* Use the same language as the source
-* Begin with an action verb whenever possible
-* Usually contain 3-10 words
-* Describe the actual next action
-* Preserve important names, objects, project names, course names, and identifiers
-* Remove greetings, politeness, and conversational filler
-* Avoid vague titles such as "Handle this," "Reminder," "Meeting," or "Do task"
-
-Remove phrases such as: Hi, Please, Can you, Could you, Don't forget, Just a reminder, Thanks, היי, בבקשה, תוכלי, תוכל, אל תשכחי, תזכורת
-
-Examples:
-"Hi, can you send Dana the updated presentation before tomorrow?" → "Send Dana the updated presentation"
-"Reminder: electricity bill due on 14 July" → "Pay the electricity bill"
-"צריך להעלות את העבודה למודל עד יום ראשון" → "להעלות את העבודה למודל"
-
-### Main action
-
-Identify the primary responsibility the user needs to perform. Ignore greetings, signatures, previous quoted messages, marketing content, legal disclaimers, and background conversation.
-
-If several actions exist, create one task representing the main responsibility. Keep useful secondary actions in notes.
-
-If no clear action exists: return isActionable: false, return an empty title, do not invent a task.
+Generate a clear, natural, action-oriented task title (3–10 words). Use the same language as the source.
+Begin with an action verb. Preserve important names, course names, and identifiers.
+Remove greetings, politeness, and filler (Hi, Please, Can you, תוכל, בבקשה, היי).
 
 ### Category
 
-Choose a category according to the meaning of the task and relevant onboarding context.
+Choose based on the task content and the user's onboarding context.
+Allowed: Work, Studies, Family, Personal, Home, Finance, Health, Other
 
-Allowed categories: Work, Studies, Family, Personal, Home, Finance, Health, Errands
+If confidence is below 0.60 return category as "" and add "Category" to missingInformation.
+Return categoryConfidence as a number 0–1.
 
-Use onboarding context when available:
-* Known employer, workplace, colleague, client, or work project → Work
-* Known university, degree, lecturer, course, assignment, Moodle, or academic project → Studies
-* Known family member, child, partner, parent, kindergarten, or school responsibility → Family
-* Bill, payment, tax, reimbursement, or banking task → Finance
-* Appointment, doctor, prescription, or medical follow-up → Health
-* Household cleaning, repair, grocery, or home maintenance task → Home
-* Pickup, delivery, shopping, or location-based errand → Errands
-* Personal administration that does not fit another category → Personal
+### Due date
 
-If category confidence is below 0.60: return category as empty string "", add "Select a category" to missingInformation.
+Current date is provided in the request. Use it to resolve ALL relative date phrases to ISO YYYY-MM-DD.
+Relative phrase examples (with resolution logic):
+- "today" / "היום" → currentDate
+- "tomorrow" / "מחר" → currentDate + 1 day
+- "in 2 days" / "בעוד יומיים" / "מחרתיים" → currentDate + 2 days
+- "next week" / "שבוע הבא" → currentDate + 7 days
+- "by Thursday" / "עד חמישי" → the next upcoming Thursday from currentDate
+- "tonight" / "הערב" → currentDate (same day, evening)
+- Named weekday (Sunday/Monday/ראשון/שני…) → the next occurrence of that weekday
 
-Return categoryConfidence as a number between 0 and 1.
+Return dueDate as "" if no deadline is mentioned.
+Return dueTime as "HH:mm" if a specific time is mentioned (e.g. "at 3pm" → "15:00"), otherwise "".
+Do NOT return past dates unless the source clearly states a past date.
 
-Do not use Other. Do not return null for category — use empty string "" when unclear.
+### Priority
 
-### Deadline
+Infer priority from deadline urgency, language, and task type:
+- Urgent: due today or tomorrow, explicit urgent language (urgent, ASAP, immediately, דחוף, בהקדם), blocks a critical event or payment
+- High: due in 2–3 days, important obligation (work deadline, exam, medical appointment)
+- Medium: due within a week, regular responsibility
+- Low: no deadline, non-critical
 
-Extract the deadline exactly as expressed in the source. Return the original phrase in deadlineText.
+Always return a priority (never null or empty).
 
-Do not calculate the final calendar date — application code will resolve it. Do not invent a time. If no deadline exists, return empty string "".
+### Estimated duration
 
-### Urgency signals
+Estimate realistically based on the task type:
+- Quick action (send email, make a call): 10–15 minutes
+- Standard task (write report, prepare document): 60–120 minutes
+- Large task (prepare presentation, complete assignment): 120–180 minutes
+- Simple errand (pay bill, book appointment): 10–20 minutes
 
-Return explicit urgency or importance signals only when supported by the source: urgent, ASAP, immediately, today, final deadline, blocks a meeting, blocks a submission, payment consequence, customer waiting, דחוף, בהקדם, חייב היום.
+Return null only if the task is too vague to estimate.
 
-Do not infer urgency from punctuation alone. Return as array of short strings.
+### Source detection
 
-### Owner
-
-Return "Me" when the user is expected to perform the task, the person's name when another person is clearly responsible, or empty string "" when unclear. Never invent an owner.
-
-### People and context
-
-Extract relevant people, projects, courses, clients, organizations, and locations. Use onboarding context when it provides a reliable match. Do not invent people, relationships, or projects.
-
-### Notes
-
-Use notes for concise supporting information: amounts, meeting context, required document contents, secondary actions, dependencies, morning/evening when no exact time is given. Do not repeat the title.
+Detect the message source from the text when clearly indicated:
+- Email headers, "forwarded message", "from:" → Email
+- "WhatsApp", conversational tone with "sent from phone" → WhatsApp
+- Calendar invite language, "meeting", "join" → Calendar
+- Class/lecture notes → Notes
+- "Teams", "Slack" mention → Teams
+- When unclear → Unknown
 
 ### Missing information
 
-Include only information that materially affects completing or scheduling the task: Select a category, Deadline is unclear, Owner is unclear, Missing location, Missing document name. Do not list every optional field.
+Only list fields that are truly missing and materially affect completing or scheduling the task:
+- "Due date" — if no deadline was mentioned
+- "Category" — if confidence was below 0.60
+- "Estimated duration" — if task is vague enough that duration cannot be estimated
 
-### Required JSON
+Do NOT list source as missing (it is always optional).
+Do NOT list priority as missing (always infer one).
+If all key fields were extracted, return an empty array [].
+
+### Notes
+
+Include concise supporting info: amounts, context, secondary actions, dependencies.
+Do not repeat the title. Keep under 2 sentences.
+
+### Required JSON shape
 
 Return exactly this structure with no additional properties:
 
@@ -102,18 +96,24 @@ Return exactly this structure with no additional properties:
   "isActionable": true,
   "title": "",
   "category": "",
-  "categoryConfidence": 0,
-  "deadlineText": "",
-  "owner": "",
-  "people": [],
-  "project": "",
-  "location": "",
-  "urgencySignals": [],
+  "categoryConfidence": 0.0,
+  "dueDate": "",
+  "dueTime": "",
+  "priority": "Medium",
+  "estimatedDurationMinutes": null,
+  "source": "Unknown",
   "notes": "",
   "missingInformation": []
 }
 
-Rules: use empty string "" for unknown optional scalar values, use empty arrays when no array values exist, never return undefined or null, do not add additional properties, return JSON only.`;
+Rules:
+- Use "" for unknown optional string fields
+- Use null for estimatedDurationMinutes when unable to estimate
+- source defaults to Unknown
+- priority always has a value (never "")
+- dueDate must be YYYY-MM-DD or ""
+- missingInformation contains only field names from the approved list above
+- Return JSON only, never any other text`;
 
 // ── Handler ───────────────────────────────────────────────────────────
 
@@ -132,9 +132,11 @@ exports.handler = async function handler(event) {
   const sourceText = String(body.sourceText || "").trim();
   const sourceType = body.sourceType ? String(body.sourceType).trim() : "";
   const relevantContext = body.relevantContext || {};
+  const currentDate = body.currentDate ? String(body.currentDate).trim() : new Date().toISOString().split("T")[0];
+  const currentDay = body.currentDay ? String(body.currentDay).trim() : new Date().toLocaleDateString("en-US", { weekday: "long" });
 
   if (!sourceText) {
-    return jsonResponse(400, { error: "Paste a message, email, invitation, or reminder first." });
+    return jsonResponse(400, { error: "Add a message, email, invitation, or reminder first." });
   }
 
   if (sourceText.length > MAX_INPUT_CHARS) {
@@ -149,7 +151,7 @@ exports.handler = async function handler(event) {
     });
   }
 
-  const userMessage = buildUserMessage({ sourceText, sourceType, relevantContext });
+  const userMessage = buildUserMessage({ sourceText, sourceType, relevantContext, currentDate, currentDay });
 
   let openaiResponse;
   try {
@@ -176,22 +178,29 @@ exports.handler = async function handler(event) {
                 title: { type: "string" },
                 category: {
                   type: "string",
-                  enum: ["Work", "Studies", "Family", "Personal", "Home", "Finance", "Health", "Errands", ""]
+                  enum: ["Work", "Studies", "Family", "Personal", "Home", "Finance", "Health", "Other", ""]
                 },
                 categoryConfidence: { type: "number" },
-                deadlineText: { type: "string" },
-                owner: { type: "string" },
-                people: { type: "array", items: { type: "string" } },
-                project: { type: "string" },
-                location: { type: "string" },
-                urgencySignals: { type: "array", items: { type: "string" } },
+                dueDate: { type: "string" },
+                dueTime: { type: "string" },
+                priority: {
+                  type: "string",
+                  enum: ["Low", "Medium", "High", "Urgent"]
+                },
+                estimatedDurationMinutes: {
+                  anyOf: [{ type: "number" }, { type: "null" }]
+                },
+                source: {
+                  type: "string",
+                  enum: ["WhatsApp", "Email", "Calendar", "Notes", "Teams", "Other", "Unknown"]
+                },
                 notes: { type: "string" },
                 missingInformation: { type: "array", items: { type: "string" } }
               },
               required: [
                 "isActionable", "title", "category", "categoryConfidence",
-                "deadlineText", "owner", "people", "project", "location",
-                "urgencySignals", "notes", "missingInformation"
+                "dueDate", "dueTime", "priority", "estimatedDurationMinutes",
+                "source", "notes", "missingInformation"
               ]
             }
           }
@@ -243,24 +252,27 @@ exports.handler = async function handler(event) {
     });
   }
 
-  return jsonResponse(200, { result: sanitizeResult(parsed, sourceType) });
+  return jsonResponse(200, { result: sanitizeResult(parsed, sourceType, currentDate) });
 };
 
 // ── User message ──────────────────────────────────────────────────────
 
-function buildUserMessage({ sourceText, sourceType, relevantContext }) {
+function buildUserMessage({ sourceText, sourceType, relevantContext, currentDate, currentDay }) {
   const ctx = serializeContext(relevantContext);
-  return `Analyze the following source and convert it into one structured task.
+  return `Current date: ${currentDate}
+Current day: ${currentDay}
 
 Relevant user context:
 ${ctx}
 
-Source type:
+Source type hint (user-selected, may be empty):
 ${sourceType || "Not specified"}
 
 <source_text>
 ${sourceText}
-</source_text>`;
+</source_text>
+
+Convert the above into one structured task. Use the current date to resolve any relative date phrases.`;
 }
 
 function serializeContext(ctx) {
@@ -269,7 +281,6 @@ function serializeContext(ctx) {
 
   if (ctx.lifeAreas?.length) lines.push(`Life areas: ${ctx.lifeAreas.join(", ")}`);
 
-  // New schema (post-refactor)
   if (ctx.work) {
     const w = ctx.work;
     if (w.industry) lines.push(`Work industry: ${w.industry}`);
@@ -293,14 +304,6 @@ function serializeContext(ctx) {
   if (ctx.health?.responsibilities?.length) lines.push(`Health responsibilities: ${ctx.health.responsibilities.join(", ")}`);
   if (ctx.finances?.responsibilities?.length) lines.push(`Finance responsibilities: ${ctx.finances.responsibilities.join(", ")}`);
 
-  // Legacy schema fields (backwards compatibility with old profiles)
-  if (ctx.workplaces?.length) lines.push(`Workplaces/industries: ${ctx.workplaces.join(", ")}`);
-  if (ctx.universities?.length) lines.push(`Universities: ${ctx.universities.join(", ")}`);
-  if (ctx.courses?.length) lines.push(`Courses/fields: ${ctx.courses.join(", ")}`);
-  if (ctx.knownPeople?.length) lines.push(`Known people: ${ctx.knownPeople.join(", ")}`);
-  if (ctx.knownProjects?.length) lines.push(`Known projects/clients: ${ctx.knownProjects.join(", ")}`);
-  if (ctx.familyResponsibilities?.length) lines.push(`Family responsibilities: ${ctx.familyResponsibilities.join(", ")}`);
-
   return lines.length ? lines.join("\n") : "No relevant context available.";
 }
 
@@ -321,27 +324,50 @@ function extractOutputText(data) {
 
 // ── Sanitize AI result ────────────────────────────────────────────────
 
-const ALLOWED_CATEGORIES = ["Work", "Studies", "Family", "Personal", "Home", "Finance", "Health", "Errands"];
+const ALLOWED_CATEGORIES = ["Work", "Studies", "Family", "Personal", "Home", "Finance", "Health", "Other"];
+const ALLOWED_SOURCES = ["WhatsApp", "Email", "Calendar", "Notes", "Teams", "Other", "Unknown"];
+const ALLOWED_PRIORITIES = ["Low", "Medium", "High", "Urgent"];
+const ALLOWED_MISSING = ["Due date", "Category", "Estimated duration"];
 
-function sanitizeResult(r, sourceType) {
+function sanitizeResult(r, _sourceType, currentDate) {
   const category = ALLOWED_CATEGORIES.includes(r.category) ? r.category : "";
   const categoryConfidence = typeof r.categoryConfidence === "number"
     ? Math.min(Math.max(r.categoryConfidence, 0), 1) : 0;
+
+  // Validate and sanitize due date
+  let dueDate = safeStr(r.dueDate);
+  if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+    dueDate = "";
+  }
+
+  // Warn if date is in the past (server-side flag for client to show warning)
+  let dueDatePast = false;
+  if (dueDate && currentDate) {
+    dueDatePast = dueDate < currentDate;
+  }
+
+  const source = ALLOWED_SOURCES.includes(r.source) ? r.source : "Unknown";
+  const priority = ALLOWED_PRIORITIES.includes(r.priority) ? r.priority : "Medium";
+  const estimatedDurationMinutes = typeof r.estimatedDurationMinutes === "number" && r.estimatedDurationMinutes > 0
+    ? Math.round(r.estimatedDurationMinutes)
+    : null;
+
+  // Sanitize missingInformation to approved field names only
+  const missingInfo = safeArray(r.missingInformation).filter(m => ALLOWED_MISSING.includes(m));
 
   return {
     isActionable: r.isActionable !== false,
     title: safeStr(r.title),
     category,
     categoryConfidence: category ? categoryConfidence : 0,
-    deadlineText: safeStr(r.deadlineText),
-    owner: safeStr(r.owner),
-    people: safeArray(r.people),
-    project: safeStr(r.project),
-    location: safeStr(r.location),
-    urgencySignals: safeArray(r.urgencySignals),
+    dueDate,
+    dueTime: safeStr(r.dueTime),
+    priority,
+    estimatedDurationMinutes,
+    source,
     notes: safeStr(r.notes),
-    missingInformation: safeArray(r.missingInformation),
-    sourceType: safeStr(sourceType)
+    missingInformation: missingInfo,
+    dueDatePast
   };
 }
 

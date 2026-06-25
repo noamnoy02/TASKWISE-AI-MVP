@@ -2,14 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TaskWise</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>TaskWise AI</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232563EB'/><path d='M8 16l5 5 11-11' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%232563EB'/><path d='M40 90l35 35 65-65' stroke='white' stroke-width='16' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>">
+
+  <!-- Description -->
+  <meta name="description" content="Turn any message into a structured task. Paste a WhatsApp message, email, or reminder and TaskWise AI extracts the action, deadline, and priority.">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TaskWise AI — Smart Task Capture">
+  <meta property="og:description" content="Turn any message into a structured task with AI. No more copy-pasting between apps.">
+
+  <!-- Mobile / PWA -->
+  <meta name="theme-color" content="#2563EB">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TaskWise">
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- SVG sprite for brand icons that can't be served from CDN -->
+  <svg style="display:none" aria-hidden="true">
+    <symbol id="icon-outlook" viewBox="0 0 24 24">
+      <rect x="1" y="4" width="13" height="16" rx="2" fill="#0078D4"/>
+      <ellipse cx="7.5" cy="12" rx="3" ry="3.5" fill="white"/>
+      <ellipse cx="7.5" cy="12" rx="1.3" ry="1.7" fill="#0078D4"/>
+      <rect x="13" y="5" width="10" height="14" rx="2" fill="#1565C0"/>
+      <polyline points="13,8 18,11.5 23,8" fill="none" stroke="white" stroke-width="1.3" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-slack" viewBox="0 0 24 24">
+      <path d="M6 15a2 2 0 01-2 2 2 2 0 01-2-2 2 2 0 012-2h2v2z" fill="#E01E5A"/>
+      <path d="M7 15a2 2 0 012-2 2 2 0 012 2v5a2 2 0 01-2 2 2 2 0 01-2-2v-5z" fill="#E01E5A"/>
+      <path d="M9 7a2 2 0 01-2-2 2 2 0 012-2 2 2 0 012 2v2H9z" fill="#36C5F0"/>
+      <path d="M9 8a2 2 0 012 2 2 2 0 01-2 2H4a2 2 0 01-2-2 2 2 0 012-2h5z" fill="#36C5F0"/>
+      <path d="M18 10a2 2 0 012-2 2 2 0 012 2 2 2 0 01-2 2h-2v-2z" fill="#2EB67D"/>
+      <path d="M17 10a2 2 0 01-2-2 2 2 0 012-2h5a2 2 0 012 2 2 2 0 01-2 2h-5z" fill="#2EB67D"/>
+      <path d="M15 19a2 2 0 012 2 2 2 0 01-2 2 2 2 0 01-2-2v-2h2z" fill="#ECB22E"/>
+      <path d="M15 18a2 2 0 01-2-2 2 2 0 012-2h5a2 2 0 012 2 2 2 0 01-2 2h-5z" fill="#ECB22E"/>
+    </symbol>
+    <symbol id="icon-teams" viewBox="0 0 24 24">
+      <rect width="24" height="24" rx="6" fill="#6264A7"/>
+      <rect x="7" y="7" width="10" height="2.5" rx="1.25" fill="white"/>
+      <rect x="10.75" y="7" width="2.5" height="11" rx="1.25" fill="white"/>
+    </symbol>
+  </svg>
+
   <!-- Decorative background blobs -->
   <div class="bg-blobs" aria-hidden="true">
     <div class="bg-blob bg-blob-1"></div>
@@ -29,13 +75,19 @@
         </div>
         <span class="main-app-logo-name">Task<strong>Wise</strong></span>
       </a>
-      <button class="main-app-menu-btn" type="button" aria-label="Menu" title="Menu">
+      <button class="main-app-menu-btn" type="button" id="mainMenuBtn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <circle cx="8" cy="4" r="1.5" fill="currentColor"/>
           <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
           <circle cx="8" cy="12" r="1.5" fill="currentColor"/>
         </svg>
       </button>
+      <div class="app-menu-dropdown hidden" id="appMenuDropdown" role="menu">
+        <button class="menu-dropdown-item" type="button" data-menu="editProfile" role="menuitem">Edit Profile</button>
+        <button class="menu-dropdown-item" type="button" data-menu="switchProfile" role="menuitem">Switch Profile</button>
+        <div class="menu-divider"></div>
+        <button class="menu-dropdown-item danger" type="button" data-menu="clearTasks" role="menuitem">Clear all tasks</button>
+      </div>
     </header>
 
     <main>
@@ -62,11 +114,13 @@
             <p class="welcome-support">Capture messages, emails, reminders and everyday responsibilities. TaskWise transforms them into organized next steps.</p>
           </div>
           <div class="source-pills-row">
-            <span class="source-pill-item">💬 WhatsApp</span>
-            <span class="source-pill-item">✉️ Gmail</span>
-            <span class="source-pill-item">📧 Outlook</span>
-            <span class="source-pill-item">📅 Calendar</span>
-            <span class="source-pill-item">📝 Notes</span>
+            <span class="source-pill-item"><img class="source-brand-icon" src="https://cdn.simpleicons.org/whatsapp" alt="" aria-hidden="true"> WhatsApp</span>
+            <span class="source-pill-item"><img class="source-brand-icon" src="https://cdn.simpleicons.org/gmail" alt="" aria-hidden="true"> Gmail</span>
+            <span class="source-pill-item"><svg class="source-brand-icon" aria-hidden="true"><use href="#icon-outlook"/></svg> Outlook</span>
+            <span class="source-pill-item"><img class="source-brand-icon" src="https://cdn.simpleicons.org/googlecalendar" alt="" aria-hidden="true"> Calendar</span>
+            <span class="source-pill-item"><svg class="source-brand-icon" aria-hidden="true"><use href="#icon-slack"/></svg> Slack</span>
+            <span class="source-pill-item"><svg class="source-brand-icon" aria-hidden="true"><use href="#icon-teams"/></svg> Teams</span>
+            <span class="source-pill-item"><img class="source-brand-icon" src="https://cdn.simpleicons.org/notion" alt="" aria-hidden="true"> Notion</span>
           </div>
           <div class="welcome-actions">
             <button id="getStartedBtn" class="primary-btn welcome-btn" type="button">Get Started</button>
@@ -120,43 +174,10 @@
             </div>
           </div>
 
-          <!-- Step 0.5: Role selection -->
-          <div class="onboarding-step hidden" id="ob-role">
-            <h2 class="step-title">What best describes you?</h2>
-            <p class="muted ob-role-step-body">This helps us tailor your experience from the start.</p>
-            <div class="role-cards" id="roleCards">
-              <button class="role-card" type="button" data-value="Student">
-                <span class="role-card-icon">🎓</span>
-                <span>Student</span>
-              </button>
-              <button class="role-card" type="button" data-value="Professional">
-                <span class="role-card-icon">💼</span>
-                <span>Professional</span>
-              </button>
-              <button class="role-card" type="button" data-value="Parent">
-                <span class="role-card-icon">👨‍👩‍👧</span>
-                <span>Parent</span>
-              </button>
-              <button class="role-card" type="button" data-value="Household">
-                <span class="role-card-icon">🏠</span>
-                <span>Managing a household</span>
-              </button>
-              <button class="role-card role-card-full" type="button" data-value="Other">
-                <span class="role-card-icon">➕</span>
-                <span>Other</span>
-              </button>
-            </div>
-            <p id="roleError" class="field-error hidden">Please select an option to continue.</p>
-            <div class="step-actions">
-              <button id="obRoleBtn" class="primary-btn" type="button">Continue</button>
-              <button class="ghost-btn ob-back" type="button">← Back</button>
-            </div>
-          </div>
-
           <!-- Step 1: Life areas -->
           <div class="onboarding-step hidden" id="ob-areas">
-            <h2 class="step-title">Select your focus areas</h2>
-            <p class="muted">Select all that apply.</p>
+            <h2 class="step-title">What areas do you manage?</h2>
+            <p class="muted">Select all areas where you regularly manage tasks. This helps the AI understand your context.</p>
             <div class="chip-grid" id="lifeAreasChips" data-multi="true">
               <button class="chip area-chip" type="button" data-value="Work">💼 Work</button>
               <button class="chip area-chip" type="button" data-value="Studies">🎓 Studies</button>
@@ -165,8 +186,14 @@
               <button class="chip area-chip" type="button" data-value="Personal">👤 Personal</button>
               <button class="chip area-chip" type="button" data-value="Health">❤️ Health</button>
               <button class="chip area-chip" type="button" data-value="Finances">💰 Finances</button>
+              <button class="chip area-chip" type="button" data-value="Other" data-triggers-other="true">➕ Other</button>
             </div>
-            <p id="lifeAreasError" class="field-error hidden">Please select at least one area.</p>
+            <div id="lifeAreasOtherWrap" class="custom-other-wrap hidden">
+              <label for="lifeAreasOther">Tell us what other area you manage <span class="optional">(optional)</span>
+                <input type="text" id="lifeAreasOther" placeholder="e.g. Volunteering, Side project, Sport club">
+              </label>
+            </div>
+            <p id="lifeAreasError" class="field-error hidden">Please select at least one area to continue.</p>
             <div class="step-actions">
               <button id="obAreasBtn" class="primary-btn" type="button">Continue</button>
               <button class="ghost-btn ob-back" type="button">← Back</button>
@@ -693,15 +720,19 @@
           <div class="source-row" style="margin-bottom:12px;">
             <span class="source-row-label">Source:</span>
             <div class="source-chips" id="homeSourceChips">
-              <span class="source-chip">💬 Message</span>
-              <span class="source-chip">✉️ Email</span>
-              <span class="source-chip">📅 Calendar</span>
-              <span class="source-chip">+ Other</span>
+              <button class="source-chip" type="button" data-source="WhatsApp"><img class="source-brand-icon" src="https://cdn.simpleicons.org/whatsapp" alt="" aria-hidden="true"> WhatsApp</button>
+              <button class="source-chip" type="button" data-source="Gmail"><img class="source-brand-icon" src="https://cdn.simpleicons.org/gmail" alt="" aria-hidden="true"> Gmail</button>
+              <button class="source-chip" type="button" data-source="Outlook"><svg class="source-brand-icon" aria-hidden="true"><use href="#icon-outlook"/></svg> Outlook</button>
+              <button class="source-chip" type="button" data-source="Calendar"><img class="source-brand-icon" src="https://cdn.simpleicons.org/googlecalendar" alt="" aria-hidden="true"> Calendar</button>
+              <button class="source-chip" type="button" data-source="Slack"><svg class="source-brand-icon" aria-hidden="true"><use href="#icon-slack"/></svg> Slack</button>
+              <button class="source-chip" type="button" data-source="Teams"><svg class="source-brand-icon" aria-hidden="true"><use href="#icon-teams"/></svg> Teams</button>
+              <button class="source-chip" type="button" data-source="Notion"><img class="source-brand-icon" src="https://cdn.simpleicons.org/notion" alt="" aria-hidden="true"> Notion</button>
+              <button class="source-chip" type="button" data-source="Other">+ Other</button>
             </div>
           </div>
           <div class="capture-actions">
             <button id="homeCreateTaskBtn" class="primary-btn cta-btn" type="button">
-              <span class="btn-icon">✦</span> Turn into a task
+              <span class="btn-icon">✦</span> Extract Task
             </button>
             <button id="homeAddManualBtn" class="secondary-btn" type="button" style="justify-content:center;">Add manually</button>
           </div>
@@ -767,22 +798,22 @@
         <div id="captureStep">
           <!-- Hero text -->
           <div class="capture-hero">
-            <h1 class="capture-hero-title">Paste<span class="dot">.</span></h1>
-            <p class="capture-hero-sub">Drop in the message. Let TaskWise take it from there.</p>
+            <h1 class="capture-hero-title">Smart Capture<span class="dot">.</span></h1>
+            <p class="capture-hero-sub">Add a message, email, meeting note or reminder. The AI will turn it into a clear task.</p>
           </div>
 
           <section class="panel capture-panel highlight-panel">
             <!-- Step 1 label -->
             <div class="step-row">
               <span class="step-badge">1</span>
-              <span class="step-label">Paste text</span>
-              <span id="contextStatus" class="status-pill" style="margin-left:auto;font-size:0.7rem;">No context</span>
+              <span class="step-label">Enter your message</span>
+              <span id="contextStatus" class="status-pill" style="margin-left:auto;font-size:0.7rem;display:none;">No context</span>
             </div>
 
             <!-- Textarea with char counter -->
             <div class="textarea-wrap">
               <textarea id="sourceTextInput" rows="6"
-                placeholder="Hi Omer, please update the presentation and send it to Maya by Thursday evening. Daniel will review the business slide before submission."></textarea>
+                placeholder="Example: Maya asked me to send the final presentation by Thursday"></textarea>
               <span id="charCounter" class="char-counter">0 / 4000</span>
             </div>
 
@@ -790,16 +821,20 @@
             <div class="source-row">
               <span class="source-row-label">Source:</span>
               <div class="source-chips" id="captureSourceChips">
-                <button class="source-chip" type="button" data-source="Message">💬 Message</button>
-                <button class="source-chip" type="button" data-source="Email">✉️ Email</button>
-                <button class="source-chip" type="button" data-source="Calendar">📅 Calendar</button>
+                <button class="source-chip" type="button" data-source="WhatsApp"><img class="source-brand-icon" src="https://cdn.simpleicons.org/whatsapp" alt="" aria-hidden="true"> WhatsApp</button>
+                <button class="source-chip" type="button" data-source="Gmail"><img class="source-brand-icon" src="https://cdn.simpleicons.org/gmail" alt="" aria-hidden="true"> Gmail</button>
+                <button class="source-chip" type="button" data-source="Outlook"><svg class="source-brand-icon" aria-hidden="true"><use href="#icon-outlook"/></svg> Outlook</button>
+                <button class="source-chip" type="button" data-source="Calendar"><img class="source-brand-icon" src="https://cdn.simpleicons.org/googlecalendar" alt="" aria-hidden="true"> Calendar</button>
+                <button class="source-chip" type="button" data-source="Slack"><svg class="source-brand-icon" aria-hidden="true"><use href="#icon-slack"/></svg> Slack</button>
+                <button class="source-chip" type="button" data-source="Teams"><svg class="source-brand-icon" aria-hidden="true"><use href="#icon-teams"/></svg> Teams</button>
+                <button class="source-chip" type="button" data-source="Notion"><img class="source-brand-icon" src="https://cdn.simpleicons.org/notion" alt="" aria-hidden="true"> Notion</button>
                 <button class="source-chip" type="button" data-source="Other">+ Other</button>
               </div>
             </div>
 
             <!-- Primary CTA -->
             <button id="createTaskBtn" class="primary-btn cta-btn" type="button">
-              <span class="btn-icon">✦</span> Turn into a task
+              <span class="btn-icon">✦</span> Extract Task
             </button>
 
             <!-- Secondary actions -->
@@ -838,27 +873,22 @@
               <span class="step-label">Preview &amp; edit</span>
             </div>
             <form id="previewForm" class="form-grid">
+
+              <!-- Task name -->
               <label class="full-width">
                 Task name
-                <input id="previewTitle" type="text" required />
+                <input id="previewTitle" type="text" required placeholder="What needs to be done?" />
                 <span id="previewTitleWarning" class="field-hint hidden"></span>
               </label>
-              <label>
-                Category
-                <select id="previewCategory">
-                  <option value="">— Select a category —</option>
-                  <option>Work</option>
-                  <option>Studies</option>
-                  <option>Family</option>
-                  <option>Personal</option>
-                  <option>Home</option>
-                  <option>Finance</option>
-                  <option>Health</option>
-                  <option>Errands</option>
-                  <option>Other</option>
-                </select>
-                <span id="previewCategoryHint" class="field-hint hidden">Select a category</span>
-              </label>
+
+              <!-- Category chips (primary UI) + hidden select for form reading -->
+              <select id="previewCategory" style="display:none" aria-hidden="true">
+                <option value=""></option>
+                <option>Work</option><option>Studies</option><option>Family</option>
+                <option>Personal</option><option>Home</option><option>Finance</option>
+                <option>Health</option><option>Other</option>
+              </select>
+
               <label>
                 Priority
                 <select id="previewPriority">
@@ -868,73 +898,68 @@
                   <option>Urgent</option>
                 </select>
               </label>
-              <label>
-                Deadline
-                <input id="previewDeadlineText" type="text" placeholder="e.g. Thursday evening" />
-              </label>
+
+              <div id="previewCategoryPrompt" class="category-prompt full-width">
+                <p class="category-prompt-label">Category</p>
+                <div class="category-prompt-chips">
+                  <button type="button" class="cat-chip" data-cat="Work">💼 Work</button>
+                  <button type="button" class="cat-chip" data-cat="Studies">🎓 Studies</button>
+                  <button type="button" class="cat-chip" data-cat="Family">👨‍👩‍👧 Family</button>
+                  <button type="button" class="cat-chip" data-cat="Personal">👤 Personal</button>
+                  <button type="button" class="cat-chip" data-cat="Home">🏠 Home</button>
+                  <button type="button" class="cat-chip" data-cat="Finance">💰 Finance</button>
+                  <button type="button" class="cat-chip" data-cat="Health">❤️ Health</button>
+                  <button type="button" class="cat-chip" data-cat="Other">📋 Other</button>
+                </div>
+              </div>
+
+              <!-- Due date -->
               <label>
                 Due date
                 <input id="previewDueDate" type="date" />
               </label>
+
+              <!-- Estimated duration -->
               <label>
-                Owner
-                <input id="previewOwner" type="text" placeholder="e.g. Me, Harel, Unassigned" />
+                Est. duration (min)
+                <input id="previewDuration" type="number" min="5" step="5" placeholder="e.g. 30" />
               </label>
+
+              <!-- Past date warning -->
+              <div id="pastDateWarning" class="warning-box full-width hidden">
+                ⚠️ The extracted due date appears to be in the past. Please confirm or choose a new date.
+              </div>
+
+              <!-- Source (optional) -->
               <label class="full-width">
-                People involved
-                <input id="previewPeople" type="text" placeholder="e.g. Maya, Ron (comma-separated)" />
-              </label>
-              <label>
-                Project / context
-                <input id="previewProject" type="text" placeholder="e.g. Survey X, Final assignment" />
-              </label>
-              <label>
-                Location
-                <input id="previewLocation" type="text" placeholder="e.g. Office, Kindergarten" />
-              </label>
-              <label>
-                Source
+                Source <span class="optional">(optional)</span>
                 <select id="previewSourceType">
+                  <option value="Unknown">Unknown</option>
                   <option>WhatsApp</option>
                   <option>Gmail</option>
                   <option>Outlook</option>
                   <option>Calendar</option>
-                  <option>Notes</option>
-                  <option>Manual</option>
-                  <option>Message</option>
-                  <option>Email</option>
-                  <option>Calendar Invite</option>
-                  <option>Reminder</option>
-                  <option>Conversation</option>
+                  <option>Slack</option>
+                  <option>Teams</option>
+                  <option>Notion</option>
                   <option>Other</option>
+                  <option>Manual</option>
                 </select>
               </label>
-              <label>
-                Estimated duration (min)
-                <input id="previewDuration" type="number" min="5" step="5" />
-              </label>
+
+              <!-- Notes -->
               <label class="full-width">
-                Notes
-                <textarea id="previewNotes" rows="3"></textarea>
+                Notes <span class="optional">(optional)</span>
+                <textarea id="previewNotes" rows="2" placeholder="Additional context or details"></textarea>
               </label>
-              <label class="full-width">
-                Missing information
-                <textarea id="previewMissingInfo" rows="2" placeholder="One item per line"></textarea>
-              </label>
-              <label class="full-width">
-                Suggested next action
-                <textarea id="previewSuggestedAction" rows="2"></textarea>
-              </label>
-              <label class="full-width">
-                Priority reason
-                <textarea id="previewPriorityReason" rows="2"></textarea>
-              </label>
+
+              <!-- Missing information display -->
+              <div id="previewMissingInfo" class="missing-info-display full-width"></div>
+
+              <!-- Actions -->
               <div class="bottom-actions full-width">
                 <button class="save-tasks-btn" type="submit">
-                  <span>📌</span> Save tasks
-                </button>
-                <button class="calendar-btn" type="button" id="addToCalendarPreviewBtn">
-                  <span>📅</span> Add to calendar
+                  <span>📌</span> Save task
                 </button>
                 <button id="cancelPreviewBtn" class="ghost-btn" type="button" style="width:100%;text-align:center;justify-content:center;display:flex;padding:10px;">← Back</button>
               </div>
@@ -944,26 +969,49 @@
 
       </section>
 
-      <!-- SHARED OWNERSHIP -->
-      <section id="sharedScreen" class="screen" data-screen="shared">
+      <!-- TASKS -->
+      <section id="tasksScreen" class="screen" data-screen="tasks">
         <section class="panel">
           <div class="panel-header">
             <div>
-              <p class="eyebrow">Collaboration</p>
-              <h2>Shared Ownership</h2>
-              <p class="muted">See who owns what, what's overdue, and what still needs an owner.</p>
+              <p class="eyebrow">All Tasks</p>
+              <h3 class="panel-h3">Your task board</h3>
             </div>
+            <button id="clearTasksBtn" class="ghost-btn small-btn-inline" type="button" style="color:var(--danger)">Clear all</button>
           </div>
           <div class="tabs-bar">
-            <button class="tab-btn active" type="button" data-shared-tab="tasks">All Tasks</button>
-            <button class="tab-btn" type="button" data-shared-tab="owners">By Owner</button>
+            <button class="tab-btn active" type="button" data-tab="board">Board</button>
+            <button class="tab-btn" type="button" data-tab="ownership">By Owner</button>
           </div>
-          <div id="sharedTasksTab" class="tab-panel is-active">
-            <div id="sharedTasksList" class="tasks-list empty-state">No tasks yet.</div>
+          <div id="tasksBoardTab" class="tab-panel is-active">
+            <div id="tasksList" class="tasks-list empty-state">No tasks yet. Use Smart Capture to create your first task.</div>
           </div>
-          <div id="sharedOwnersTab" class="tab-panel">
-            <div id="sharedOwnerBoard" class="ownership-board empty-state">No ownership data yet.</div>
+          <div id="ownershipTab" class="tab-panel">
+            <div id="ownershipBoard" class="ownership-board empty-state">No ownership data yet.</div>
           </div>
+        </section>
+      </section>
+
+      <!-- CALENDAR -->
+      <section id="calendarScreen" class="screen" data-screen="calendar">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Calendar</p>
+              <h3 class="panel-h3">Scheduled tasks</h3>
+              <p class="muted">Tasks with due dates organized by timeline.</p>
+            </div>
+          </div>
+          <div class="calendar-export-bar">
+            <button id="exportAllCalBtn" class="secondary-btn" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Export all to calendar
+            </button>
+            <button id="exportSelectedCalBtn" class="secondary-btn" type="button" disabled>
+              Export selected
+            </button>
+          </div>
+          <div id="calendarAgenda" class="calendar-agenda empty-state">No scheduled tasks yet.</div>
         </section>
       </section>
 
@@ -1021,19 +1069,50 @@
     <!-- Bottom navigation -->
     <nav class="bottom-nav" id="bottomNav">
       <button type="button" data-nav-target="home" title="Home">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </span>
         <span class="nav-label">Home</span>
       </button>
+      <button type="button" data-nav-target="tasks" title="Tasks">
+        <span class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </span>
+        <span class="nav-label">Tasks</span>
+      </button>
       <button type="button" data-nav-target="capture" class="nav-main" title="Capture">
-        <span class="nav-icon">✨</span>
+        <span class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8Z"/>
+            <path d="M19.5 3l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9Z" opacity="0.65"/>
+          </svg>
+        </span>
         <span class="nav-label">Capture</span>
       </button>
-      <button type="button" data-nav-target="shared" title="Shared">
-        <span class="nav-icon">👥</span>
-        <span class="nav-label">Shared</span>
+      <button type="button" data-nav-target="calendar" title="Calendar">
+        <span class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </span>
+        <span class="nav-label">Calendar</span>
       </button>
       <button type="button" data-nav-target="profile" title="Profile">
-        <span class="nav-icon">👤</span>
+        <span class="nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </span>
         <span class="nav-label">Profile</span>
       </button>
     </nav>

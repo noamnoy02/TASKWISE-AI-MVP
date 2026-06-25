@@ -18,7 +18,9 @@ import {
   startCapture,
   openManualCapture
 } from "./screens/capture.js";
-import { initSharedScreen } from "./screens/shared.js";
+import { getActiveScreen } from "./nav.js";
+import { initTasksScreen } from "./screens/tasks.js";
+import { initCalendarScreen } from "./screens/calendar.js";
 import { initProfileScreen } from "./screens/profile.js";
 
 // ── Callbacks shared across screens ─────────────────────────────
@@ -27,14 +29,15 @@ function handleTasksChanged() {
   renderAll();
 }
 
-function handleQuickCapture(text) {
+function handleQuickCapture(text, source) {
   showScreen("capture");
-  startCapture(text);
+  startCapture(text, source);
 }
 
 function handleManualCapture() {
+  const origin = getActiveScreen();
   showScreen("capture");
-  openManualCapture();
+  openManualCapture(origin);
 }
 
 function handleEditTask(task) {
@@ -73,10 +76,52 @@ function showInitialScreen() {
   showScreen("home");
 }
 
+// ── Header menu ──────────────────────────────────────────────────
+
+function initHeaderMenu() {
+  const btn = document.getElementById("mainMenuBtn");
+  const dropdown = document.getElementById("appMenuDropdown");
+  if (!btn || !dropdown) return;
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = !dropdown.classList.contains("hidden");
+    dropdown.classList.toggle("hidden", isOpen);
+    btn.setAttribute("aria-expanded", String(!isOpen));
+  });
+
+  dropdown.addEventListener("click", (e) => {
+    const item = e.target.closest("[data-menu]");
+    if (!item) return;
+    dropdown.classList.add("hidden");
+    btn.setAttribute("aria-expanded", "false");
+
+    const action = item.dataset.menu;
+    if (action === "editProfile") {
+      openOnboardingForEdit(handleOnboardingComplete);
+    } else if (action === "switchProfile") {
+      handleSwitchProfile();
+    } else if (action === "clearTasks") {
+      if (confirm("Clear all tasks? This cannot be undone.")) {
+        import("./storage.js").then(({ saveTasks }) => {
+          saveTasks([]);
+          handleTasksChanged();
+        });
+      }
+    }
+  });
+
+  document.addEventListener("click", () => {
+    dropdown.classList.add("hidden");
+    btn.setAttribute("aria-expanded", "false");
+  });
+}
+
 // ── App bootstrap ────────────────────────────────────────────────
 
 function initApp() {
   initNav();
+  initHeaderMenu();
 
   initWelcomeScreen({
     onGetStarted: () => {
@@ -118,10 +163,12 @@ function initApp() {
     onTaskSaved: handleTasksChanged
   });
 
-  initSharedScreen({
+  initTasksScreen({
     onEditTask: handleEditTask,
     onTasksChanged: handleTasksChanged
   });
+
+  initCalendarScreen();
 
   initProfileScreen({
     onEditProfile: () => openOnboardingForEdit(handleOnboardingComplete),

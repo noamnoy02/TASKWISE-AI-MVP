@@ -16,6 +16,53 @@ function sanitizeFileName(value) {
     .slice(0, 50);
 }
 
+export function downloadAllIcsFile(tasks) {
+  if (!tasks.length) return;
+
+  const events = tasks.map(task => {
+    const dateStr = task.dueDate || new Date().toISOString().slice(0, 10);
+    const startDate = new Date(`${dateStr}T09:00:00`);
+    const durationMs = (Number(task.durationMinutes) || 60) * 60 * 1000;
+    const endDate = new Date(startDate.getTime() + durationMs);
+
+    const descParts = [
+      task.notes || "",
+      task.suggestedAction ? `Next action: ${task.suggestedAction}` : "",
+      task.missingInfo?.length ? `Missing info: ${task.missingInfo.join(", ")}` : ""
+    ].filter(Boolean);
+
+    return [
+      "BEGIN:VEVENT",
+      `UID:${escapeIcs(task.id + "@taskwise-ai")}`,
+      `DTSTAMP:${formatIcsDateTime(new Date())}`,
+      `DTSTART:${formatIcsDateTime(startDate)}`,
+      `DTEND:${formatIcsDateTime(endDate)}`,
+      `SUMMARY:${escapeIcs(task.title)}`,
+      `DESCRIPTION:${escapeIcs(descParts.join("\\n"))}`,
+      task.category ? `CATEGORIES:${escapeIcs(task.category)}` : "",
+      "END:VEVENT"
+    ].filter(Boolean).join("\r\n");
+  });
+
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//TaskWise AI//MVP//EN",
+    ...events,
+    "END:VCALENDAR"
+  ].join("\r\n");
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "taskwise-tasks.ics";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function downloadIcsFile(task) {
   const dateStr = task.dueDate || new Date().toISOString().slice(0, 10);
   const startDate = new Date(`${dateStr}T09:00:00`);

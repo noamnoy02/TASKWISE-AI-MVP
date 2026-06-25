@@ -21,6 +21,7 @@ const els = {
 
 let activeFilter = null;
 let callbacks = {};
+let selectedHomeSource = null;
 
 // ── Greeting ──────────────────────────────────────────────────────────
 
@@ -271,6 +272,23 @@ function handleTaskListClick(event) {
 export function initHomeScreen(options = {}) {
   callbacks = options;
 
+  // Source chip selection on home screen
+  const homeChips = document.getElementById("homeSourceChips");
+  homeChips?.addEventListener("click", e => {
+    const chip = e.target.closest("button.source-chip[data-source]");
+    if (!chip) return;
+    const src = chip.dataset.source;
+    if (selectedHomeSource === src) {
+      selectedHomeSource = null;
+      homeChips.querySelectorAll("button.source-chip").forEach(b => b.classList.remove("selected"));
+    } else {
+      selectedHomeSource = src;
+      homeChips.querySelectorAll("button.source-chip").forEach(b =>
+        b.classList.toggle("selected", b.dataset.source === src)
+      );
+    }
+  });
+
   // Quick capture
   els.createTaskBtn.addEventListener("click", () => {
     const text = els.quickCapture.value.trim();
@@ -279,7 +297,10 @@ export function initHomeScreen(options = {}) {
       return;
     }
     els.quickCapture.value = "";
-    if (callbacks.onQuickCapture) callbacks.onQuickCapture(text);
+    const src = selectedHomeSource;
+    selectedHomeSource = null;
+    homeChips?.querySelectorAll("button.source-chip").forEach(b => b.classList.remove("selected"));
+    if (callbacks.onQuickCapture) callbacks.onQuickCapture(text, src);
   });
 
   els.addManualBtn.addEventListener("click", () => {

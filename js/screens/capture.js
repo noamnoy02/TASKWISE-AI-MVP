@@ -1,11 +1,11 @@
 import { getProfile, getCorrections, addCorrection, getTasks, saveTasks } from "../storage.js";
 import {
   uuid, normalizePriority, normalizeCategory, normalizeSourceType,
-  resolveDeadline, calculatePriority
+  calculatePriority
 } from "../taskUtils.js";
 import { analyzeTaskWithAI } from "../aiClient.js";
 import { onProfileChange } from "./onboarding.js";
-import { getActiveScreen } from "../nav.js";
+import { getActiveScreen, showScreen } from "../nav.js";
 
 const MAX_INPUT_CHARS = 4000;
 
@@ -27,20 +27,14 @@ const els = {
   previewTitle: document.getElementById("previewTitle"),
   previewTitleWarning: document.getElementById("previewTitleWarning"),
   previewCategory: document.getElementById("previewCategory"),
-  previewCategoryHint: document.getElementById("previewCategoryHint"),
-  previewDeadlineText: document.getElementById("previewDeadlineText"),
+  previewCategoryPrompt: document.getElementById("previewCategoryPrompt"),
   previewDueDate: document.getElementById("previewDueDate"),
   previewPriority: document.getElementById("previewPriority"),
-  previewOwner: document.getElementById("previewOwner"),
-  previewPeople: document.getElementById("previewPeople"),
-  previewProject: document.getElementById("previewProject"),
-  previewLocation: document.getElementById("previewLocation"),
   previewSourceType: document.getElementById("previewSourceType"),
   previewDuration: document.getElementById("previewDuration"),
   previewNotes: document.getElementById("previewNotes"),
   previewMissingInfo: document.getElementById("previewMissingInfo"),
-  previewSuggestedAction: document.getElementById("previewSuggestedAction"),
-  previewPriorityReason: document.getElementById("previewPriorityReason"),
+  pastDateWarning: document.getElementById("pastDateWarning"),
   cancelPreviewBtn: document.getElementById("cancelPreviewBtn")
 };
 
@@ -48,6 +42,7 @@ let currentPreviewTask = null;
 let onTaskSaved = null;
 let selectedSourceHint = null;
 let isSubmitting = false;
+let _manualReturnScreen = null;
 
 // ── Loading / error helpers ───────────────────────────────────────────
 
@@ -89,6 +84,7 @@ function showCaptureStep() {
 function showPreviewStep() {
   els.captureStep.classList.add("hidden");
   els.previewStep.classList.remove("hidden");
+  window.scrollTo(0, 0);
 }
 
 // ── Source chip selection ─────────────────────────────────────────────
@@ -107,6 +103,7 @@ function clearSourceSelection() {
 // ── Context status pill ───────────────────────────────────────────────
 
 export function updateContextStatus() {
+  if (!els.contextStatus) return;
   const profile = getProfile();
   els.contextStatus.classList.remove("good", "warning");
   if (!profile) {
@@ -115,22 +112,20 @@ export function updateContextStatus() {
     return;
   }
   const signals = [
-    profile.workContext?.role, profile.workContext?.industry, profile.workContext?.commonProjects,
-    profile.studyContext?.field, profile.studyContext?.institution,
+    profile.workContext?.role, profile.workContext?.industry,
+    profile.studyContext?.fieldOfStudy,  profile.studyContext?.institution,
     ...(profile.lifeAreas || []), ...(profile.commonTaskTypes || [])
   ].filter(Boolean);
   els.contextStatus.textContent = `${signals.length} context signals`;
   els.contextStatus.classList.add("good");
 }
 
-// ── Title validation (deterministic, no extra AI call) ────────────────
+// ── Title validation ──────────────────────────────────────────────────
 
 function validateTitle(title, sourceText) {
   if (!title) return null;
   const words = title.trim().split(/\s+/);
   if (words.length > 15) return "review_long";
-
-  // Flag if title is nearly identical to a long conversational source
   if (sourceText && sourceText.length > 120) {
     const norm = s => s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "").replace(/\s+/g, " ").trim();
     const nt = norm(title);
@@ -143,50 +138,77 @@ function validateTitle(title, sourceText) {
 // ── Map AI result → internal task object ─────────────────────────────
 
 function mapAiResult(aiResult, sourceType, originalText) {
-  const deadlineText = aiResult.deadlineText || null;
-  const resolvedDate = resolveDeadline(deadlineText);
-  const priority = calculatePriority(resolvedDate, aiResult.urgencySignals);
-
-  const rawCategory = aiResult.category || "";           // "" means AI was unsure
+  const rawCategory = aiResult.category || "";
   const category = rawCategory ? (normalizeCategory(rawCategory) || "Other") : null;
   const titleWarning = validateTitle(aiResult.title, originalText);
 
+  // Use AI-provided dueDate directly (AI calculated it from currentDate)
+  const dueDate = aiResult.dueDate || "";
+
+  // Use AI-provided priority, fall back to calculatePriority if missing
+  const priority = normalizePriority(aiResult.priority) ||
+    calculatePriority(dueDate || null, []);
+
+  // Source: prefer AI detection, fall back to user chip selection
+  const aiSource = aiResult.source && aiResult.source !== "Unknown"
+    ? aiResult.source
+    : (sourceType || "Unknown");
+
   return {
-    // Core task fields
     title: aiResult.title || "",
     category,
     categoryConfidence: rawCategory ? (aiResult.categoryConfidence || 0) : 0,
-    deadlineText,
-    dueDate: resolvedDate || "",
+    dueDate,
+    dueTime: aiResult.dueTime || "",
     priority,
-    owner: aiResult.owner || "Unassigned",
-    people: aiResult.people || [],
-    project: aiResult.project || null,
-    location: aiResult.location || null,
-    sourceType: normalizeSourceType(sourceType || "Other"),
-    urgencySignals: aiResult.urgencySignals || [],
+    sourceType: normalizeSourceType(aiSource),
+    estimatedDurationMinutes: aiResult.estimatedDurationMinutes || null,
     notes: aiResult.notes || "",
     missingInfo: aiResult.missingInformation || [],
-    suggestedAction: "",
-    priorityReason: "",
+    dueDatePast: aiResult.dueDatePast || false,
     originalText,
     isActionable: aiResult.isActionable !== false,
     titleWarning,
-    // Metadata for correction tracking
     aiSuggestedCategory: rawCategory || null,
-    aiSuggestedOwner: aiResult.owner || "",
     aiGenerated: true
   };
 }
 
+// ── Missing info display ──────────────────────────────────────────────
+
+function renderMissingInfo(task) {
+  if (!els.previewMissingInfo) return;
+
+  // Missing info is only meaningful after AI extraction
+  if (!task.aiGenerated) {
+    els.previewMissingInfo.innerHTML = "";
+    return;
+  }
+
+  // Compute missing fields from actual task state
+  const missing = [...(task.missingInfo || [])];
+
+  // Add fields we can verify locally if AI missed them
+  if (!task.dueDate && !missing.includes("Due date")) missing.push("Due date");
+  if (!task.category && !missing.includes("Category")) missing.push("Category");
+
+  if (!missing.length) {
+    els.previewMissingInfo.innerHTML =
+      `<span class="missing-ok">✓ All key details were extracted. Review and save when ready.</span>`;
+  } else {
+    els.previewMissingInfo.innerHTML =
+      `<span class="missing-label">Missing:</span> ` +
+      missing.map(m => `<span class="missing-chip">${escHtml(m)}</span>`).join(" ");
+  }
+}
+
 // ── Fill preview form ─────────────────────────────────────────────────
 
-function fillPreview(task, badgeLabel, badgeClass) {
+function fillPreview(task, badgeLabel) {
   currentPreviewTask = task;
 
   els.previewTitle.value = task.title || "";
 
-  // Title warning
   if (els.previewTitleWarning) {
     const warn = task.titleWarning;
     els.previewTitleWarning.textContent =
@@ -196,76 +218,64 @@ function fillPreview(task, badgeLabel, badgeClass) {
     els.previewTitleWarning.classList.toggle("hidden", !warn);
   }
 
-  // Category — null means AI was unsure
-  const cat = task.category;
-  if (els.previewCategory) {
-    els.previewCategory.value = cat || "";
-  }
-  if (els.previewCategoryHint) {
-    const showHint = !cat;
-    els.previewCategoryHint.textContent = showHint ? "Select a category" : "";
-    els.previewCategoryHint.classList.toggle("hidden", !showHint);
+  if (els.previewCategory) els.previewCategory.value = task.category || "";
+
+  // Category chips — always visible, pre-select whichever category is set
+  if (els.previewCategoryPrompt) {
+    els.previewCategoryPrompt.classList.remove("hidden");
+    els.previewCategoryPrompt.querySelectorAll("button[data-cat]").forEach(b => {
+      b.classList.toggle("selected", b.dataset.cat === (task.category || ""));
+    });
   }
 
-  els.previewDeadlineText.value = task.deadlineText || "";
   els.previewDueDate.value = task.dueDate || "";
   els.previewPriority.value = normalizePriority(task.priority);
-  els.previewOwner.value = task.owner || "";
 
-  if (els.previewPeople) {
-    els.previewPeople.value = Array.isArray(task.people) ? task.people.join(", ") : (task.people || "");
+  // Past date warning
+  if (els.pastDateWarning) {
+    const isPast = task.dueDatePast ||
+      (task.dueDate && task.dueDate < new Date().toISOString().split("T")[0]);
+    els.pastDateWarning.classList.toggle("hidden", !isPast);
   }
-  if (els.previewProject) els.previewProject.value = task.project || "";
-  if (els.previewLocation) els.previewLocation.value = task.location || "";
 
-  const srcNorm = normalizeSourceType(task.sourceType);
-  const srcOption = Array.from(els.previewSourceType.options).find(o => o.value === srcNorm);
-  els.previewSourceType.value = srcOption ? srcNorm : "Other";
+  if (els.previewSourceType) {
+    const src = normalizeSourceType(task.sourceType);
+    const opt = Array.from(els.previewSourceType.options).find(o => o.value === src);
+    els.previewSourceType.value = opt ? src : "Unknown";
+  }
 
-  els.previewDuration.value = task.durationMinutes || "";
+  els.previewDuration.value = task.estimatedDurationMinutes || "";
   els.previewNotes.value = task.notes || "";
-  els.previewMissingInfo.value = Array.isArray(task.missingInfo)
-    ? task.missingInfo.join("\n")
-    : String(task.missingInfo || "");
-  els.previewSuggestedAction.value = task.suggestedAction || "";
-  els.previewPriorityReason.value = task.priorityReason || "";
+
+  renderMissingInfo(task);
 
   els.aiSourceBadge.textContent = `✦ ${badgeLabel || "AI result"}`;
-  els.aiSourceBadge.className = `extraction-count`;
+  els.aiSourceBadge.className = "extraction-count";
 
   showPreviewStep();
 }
 
 function readPreviewTask() {
-  const missingInfo = els.previewMissingInfo.value.split("\n").map(s => s.trim()).filter(Boolean);
-  const people = els.previewPeople
-    ? els.previewPeople.value.split(",").map(s => s.trim()).filter(Boolean)
-    : (currentPreviewTask?.people || []);
-
   return {
     id: currentPreviewTask?.id || uuid(),
     title: els.previewTitle.value.trim(),
-    category: els.previewCategory.value || null,
-    deadlineText: els.previewDeadlineText.value.trim(),
+    category: els.previewCategory?.value || null,
     dueDate: els.previewDueDate.value,
+    dueTime: currentPreviewTask?.dueTime || "",
     priority: els.previewPriority.value,
-    owner: els.previewOwner.value.trim() || "Unassigned",
-    people,
-    project: els.previewProject?.value.trim() || currentPreviewTask?.project || null,
-    location: els.previewLocation?.value.trim() || currentPreviewTask?.location || null,
-    sourceType: els.previewSourceType.value,
-    durationMinutes: Number(els.previewDuration.value || 0),
+    sourceType: els.previewSourceType?.value || "Unknown",
+    estimatedDurationMinutes: Number(els.previewDuration.value || 0) || null,
     notes: els.previewNotes.value.trim(),
-    missingInfo,
-    suggestedAction: els.previewSuggestedAction.value.trim(),
-    priorityReason: els.previewPriorityReason.value.trim(),
+    missingInfo: currentPreviewTask?.missingInfo || [],
     originalText: currentPreviewTask?.originalText || "",
-    urgencySignals: currentPreviewTask?.urgencySignals || [],
+    // preserve legacy fields for home screen display
+    deadlineText: currentPreviewTask?.deadlineText || "",
+    owner: currentPreviewTask?.owner || "Me",
+    people: currentPreviewTask?.people || [],
     categoryConfidence: currentPreviewTask?.categoryConfidence,
     aiSuggestedCategory: currentPreviewTask?.aiSuggestedCategory,
-    aiSuggestedOwner: currentPreviewTask?.aiSuggestedOwner,
-    status: currentPreviewTask?.status || "Open",
     aiGenerated: currentPreviewTask?.aiGenerated ?? false,
+    status: currentPreviewTask?.status || "Open",
     createdAt: currentPreviewTask?.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -279,15 +289,11 @@ function recordCorrectionIfNeeded(finalTask) {
 
   const catChanged = orig.aiSuggestedCategory &&
     (normalizeCategory(orig.aiSuggestedCategory) || "Other") !== (finalTask.category || "Other");
-  const ownerChanged = orig.aiSuggestedOwner !== undefined &&
-    (orig.aiSuggestedOwner || "Unassigned") !== finalTask.owner;
 
-  if (catChanged || ownerChanged) {
+  if (catChanged) {
     addCorrection({
       aiCategory: orig.aiSuggestedCategory || "",
-      finalCategory: finalTask.category || "",
-      aiOwner: orig.aiSuggestedOwner || "",
-      finalOwner: finalTask.owner
+      finalCategory: finalTask.category || ""
     });
   }
 }
@@ -298,7 +304,7 @@ async function runAiExtraction(text) {
   if (isSubmitting) return;
   clearError(); clearInfo();
 
-  if (!text) { showError("Paste a message, email, invitation, or reminder first."); return; }
+  if (!text) { showError("Add a message, email, invitation, or reminder first."); return; }
   if (text.length > MAX_INPUT_CHARS) {
     showError("This text is too long. Please paste only the part that contains the task."); return;
   }
@@ -314,12 +320,12 @@ async function runAiExtraction(text) {
     const aiResult = data.result;
 
     if (!aiResult.isActionable) {
-      showInfo("The pasted text doesn't appear to contain an actionable task. Try a different message, or add the task manually.");
+      showInfo("The text doesn't appear to contain an actionable task. Try a different message, or add the task manually.");
       return;
     }
 
     const task = mapAiResult(aiResult, selectedSourceHint, text);
-    fillPreview(task, "AI result", "ai");
+    fillPreview(task, "AI result");
   } catch (err) {
     showError(
       err.message || "TaskWise could not organize this task right now. Please try again or add it manually.",
@@ -345,6 +351,7 @@ function handleSaveTask(event) {
   saveTasks(tasks);
 
   currentPreviewTask = null;
+  _manualReturnScreen = null;
   els.sourceTextInput.value = "";
   clearError(); clearInfo(); clearSourceSelection();
   showCaptureStep();
@@ -353,33 +360,44 @@ function handleSaveTask(event) {
 
 // ── Public API ────────────────────────────────────────────────────────
 
-export function startCapture(text) {
+export function startCapture(text, sourceHint) {
   clearError(); clearInfo(); showCaptureStep();
   els.sourceTextInput.value = text;
+  if (sourceHint) setSelectedSource(sourceHint);
   if (text.trim()) runAiExtraction(text.trim());
 }
 
-export function openManualCapture() {
+export function openManualCapture(returnScreen = null) {
+  _manualReturnScreen = returnScreen;
   clearError(); clearInfo();
   currentPreviewTask = {
-    title: "", category: null, deadlineText: "", dueDate: "",
-    priority: "Medium", owner: "Me", sourceType: "Manual",
-    people: [], project: null, location: null,
-    durationMinutes: 0, notes: "", missingInfo: [], suggestedAction: "",
-    priorityReason: "", originalText: "", aiGenerated: false
+    title: "", category: null, categoryConfidence: 0,
+    dueDate: "", dueTime: "", priority: "Medium",
+    sourceType: "Unknown", estimatedDurationMinutes: null,
+    notes: "", missingInfo: [], originalText: "",
+    deadlineText: "", owner: "Me", people: [],
+    aiGenerated: false
   };
-  fillPreview(currentPreviewTask, "Manual entry", "");
+  fillPreview(currentPreviewTask, "Manual entry");
 }
 
 export function openTaskForEdit(task) {
   clearError(); clearInfo();
-  currentPreviewTask = { ...task, missingInfo: task.missingInfo || [], people: task.people || [] };
+  _manualReturnScreen = null;
+  currentPreviewTask = {
+    ...task,
+    missingInfo: task.missingInfo || [],
+    people: task.people || [],
+    estimatedDurationMinutes: task.estimatedDurationMinutes || task.durationMinutes || null,
+    dueDatePast: task.dueDate ? task.dueDate < new Date().toISOString().split("T")[0] : false
+  };
   els.sourceTextInput.value = task.originalText || "";
-  fillPreview(currentPreviewTask, task.aiGenerated ? "AI result" : "Manual entry", task.aiGenerated ? "ai" : "");
+  fillPreview(currentPreviewTask, task.aiGenerated ? "AI result" : "Manual entry");
 }
 
 export function resetCaptureScreen() {
   currentPreviewTask = null; isSubmitting = false;
+  _manualReturnScreen = null;
   els.sourceTextInput.value = "";
   clearError(); clearInfo(); clearSourceSelection();
   showCaptureStep();
@@ -402,13 +420,26 @@ export function initCaptureScreen(options = {}) {
   els.sourceTextInput.addEventListener("input", updateCharCounter);
   updateCharCounter();
 
-  // ── "Add to calendar" on preview step ────────────────────────────
-  document.getElementById("addToCalendarPreviewBtn")?.addEventListener("click", () => {
-    const task = readPreviewTask();
-    if (task.dueDate) {
-      import("../ics.js").then(({ downloadIcsFile }) => downloadIcsFile(task));
-    }
+  // ── Due date change → re-check past date warning ──────────────────
+  els.previewDueDate?.addEventListener("change", () => {
+    if (!els.pastDateWarning) return;
+    const val = els.previewDueDate.value;
+    const isPast = val && val < new Date().toISOString().split("T")[0];
+    els.pastDateWarning.classList.toggle("hidden", !isPast);
   });
+
+  // ── Category chips ────────────────────────────────────────────────
+  document.getElementById("previewCategoryPrompt")
+    ?.addEventListener("click", e => {
+      const btn = e.target.closest("button[data-cat]");
+      if (!btn) return;
+      const cat = btn.dataset.cat;
+      if (els.previewCategory) els.previewCategory.value = cat;
+      document.getElementById("previewCategoryPrompt")
+        .querySelectorAll("button[data-cat]")
+        .forEach(b => b.classList.toggle("selected", b.dataset.cat === cat));
+      if (currentPreviewTask) currentPreviewTask.category = cat;
+    });
 
   els.sourceChips?.addEventListener("click", e => {
     const chip = e.target.closest("button.source-chip");
@@ -421,10 +452,10 @@ export function initCaptureScreen(options = {}) {
     if (!isSubmitting) runAiExtraction(els.sourceTextInput.value.trim());
   });
 
-  els.addManualTaskBtn.addEventListener("click", openManualCapture);
+  els.addManualTaskBtn.addEventListener("click", () => openManualCapture(getActiveScreen()));
 
   els.loadExampleBtn.addEventListener("click", () => {
-    els.sourceTextInput.value = "Hi Omer, please update the presentation and send it to Maya by Thursday evening. Daniel will review the business slide before submission.";
+    els.sourceTextInput.value = "Maya asked me to send the final presentation to Daniel by Thursday. He needs to review the budget slide before we submit it to the client.";
     updateCharCounter();
   });
 
@@ -432,13 +463,22 @@ export function initCaptureScreen(options = {}) {
 
   els.cancelPreviewBtn.addEventListener("click", () => {
     currentPreviewTask = null;
-    showCaptureStep();
+    const ret = _manualReturnScreen;
+    _manualReturnScreen = null;
+    // Navigate back: if came from a different screen (e.g. home), go there
+    if (ret && ret !== "capture") {
+      showScreen(ret);
+    } else {
+      showCaptureStep();
+    }
   });
 
   document.addEventListener("keydown", e => {
     if (e.key === "Escape" && getActiveScreen() === "capture" && !els.previewStep.classList.contains("hidden")) {
+      const ret = _manualReturnScreen;
       currentPreviewTask = null;
-      showCaptureStep();
+      _manualReturnScreen = null;
+      if (ret && ret !== "capture") showScreen(ret); else showCaptureStep();
     }
   });
 

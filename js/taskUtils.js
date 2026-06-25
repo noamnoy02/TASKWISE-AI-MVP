@@ -1,8 +1,7 @@
 export const CATEGORIES = ["Work", "Studies", "Family", "Personal", "Home", "Finance", "Health", "Errands", "Other"];
 export const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
 export const SOURCE_TYPES = [
-  "WhatsApp", "Gmail", "Outlook", "Calendar", "Notes", "Manual",
-  "Message", "Email", "Calendar Invite", "Reminder", "Conversation", "Other"
+  "WhatsApp", "Gmail", "Outlook", "Calendar", "Slack", "Teams", "Notion", "Other", "Unknown", "Manual"
 ];
 
 export function uuid() {
