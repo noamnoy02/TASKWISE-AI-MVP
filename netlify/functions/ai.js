@@ -20,11 +20,21 @@ Remove greetings, politeness, and filler (Hi, Please, Can you, תוכל, בבק�
 
 ### Category
 
-Choose based on the task content and the user's onboarding context.
+Choose based on the task content AND the user's onboarding context (life areas, work industry/role, study institution/field/courses).
 Allowed: Work, Studies, Family, Personal, Home, Finance, Health, Other
 
-If confidence is below 0.60 return category as "" and add "Category" to missingInformation.
+If confidence is below 0.75 return category as "" and add "Category" to missingInformation.
 Return categoryConfidence as a number 0–1.
+
+### Disambiguating Work vs Studies
+
+When the user has both Work and Studies, use their specific context to decide:
+- Check if the task mentions a course name, professor, university, academic deadline, exam, assignment, or submission → Studies
+- Check if the task mentions a client, colleague, manager, company project, meeting, or deadline tied to employment → Work
+- If the task involves a topic (e.g. "fintech", "data science") that appears in BOTH the user's work field and study field, lower confidence and lean toward Studies if there is any academic signal, Work if there is a professional signal
+- If you genuinely cannot tell, return category as "" and add "Category" to missingInformation — do NOT guess
+
+Always look at the user's coursesOrPeople (study) and projectsOrPeople (work) lists for name matches.
 
 ### Due date
 
@@ -76,7 +86,7 @@ Detect the message source from the text when clearly indicated:
 
 Only list fields that are truly missing and materially affect completing or scheduling the task:
 - "Due date" — if no deadline was mentioned
-- "Category" — if confidence was below 0.60
+- "Category" — if confidence was below 0.75
 - "Estimated duration" — if task is vague enough that duration cannot be estimated
 
 Do NOT list source as missing (it is always optional).

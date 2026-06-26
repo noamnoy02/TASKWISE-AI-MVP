@@ -6,8 +6,8 @@
   <title>TaskWise AI</title>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232563EB'/><path d='M8 16l5 5 11-11' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%232563EB'/><path d='M40 90l35 35 65-65' stroke='white' stroke-width='16' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
 
   <!-- Description -->
   <meta name="description" content="Turn any message into a structured task. Paste a WhatsApp message, email, or reminder and TaskWise AI extracts the action, deadline, and priority.">
@@ -68,10 +68,7 @@
     <header class="main-app-header" id="mainAppHeader">
       <a class="main-app-logo" href="#" aria-label="TaskWise home">
         <div class="main-app-logo-icon">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M4 10.5L8 14.5L16 6" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M10 2.5L11.5 1L13 2.5" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-          </svg>
+          <img src="logo.png" alt="TaskWise logo" width="28" height="28" style="border-radius:6px;display:block;">
         </div>
         <span class="main-app-logo-name">Task<strong>Wise</strong></span>
       </a>
@@ -101,11 +98,7 @@
         <div class="fullscreen-center welcome-v2">
           <div class="tw-logo-wrap">
             <div class="tw-logo-icon">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-                <path d="M8 19L15 26L28 10" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M22 6L24 4L26 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
-                <path d="M28 10L30 8" stroke="white" stroke-width="1.8" stroke-linecap="round" opacity="0.55"/>
-              </svg>
+              <img src="logo.png" alt="TaskWise logo" width="56" height="56" style="border-radius:14px;display:block;">
             </div>
             <span class="tw-app-name">TaskWise</span>
           </div>
@@ -133,9 +126,7 @@
       <section id="userentryScreen" class="screen" data-screen="userentry">
         <div class="fullscreen-center">
           <div class="userentry-brand">
-            <div class="tw-logo-icon tw-logo-sm">
-              <span class="tw-logo-text">Tw</span>
-            </div>
+            <img src="logo.png" alt="TaskWise logo" width="44" height="44" style="border-radius:11px;display:block;">
             <span class="brand-label">TASKWISE</span>
           </div>
           <h2 id="userentryHeading" class="userentry-heading">Let's get started</h2>
@@ -166,7 +157,7 @@
 
           <!-- Intro (not counted in progress) -->
           <div class="onboarding-step" id="ob-intro">
-            <div class="step-emoji tw-step-mark">Tw</div>
+            <img src="logo.png" alt="TaskWise logo" class="tw-step-mark" width="64" height="64" style="border-radius:16px;display:block;margin:0 auto 12px;">
             <h2 class="step-title">Let's personalize TaskWise</h2>
             <p class="step-body">A few quick questions help TaskWise understand your responsibilities and classify tasks more accurately.</p>
             <div class="step-actions">
@@ -680,7 +671,7 @@
 
           <!-- Step 4: Completion -->
           <div class="onboarding-step hidden" id="ob-done">
-            <div class="step-emoji tw-step-mark completion-mark">Tw</div>
+            <img src="logo.png" alt="TaskWise logo" class="tw-step-mark completion-mark" width="64" height="64" style="border-radius:16px;display:block;margin:0 auto 12px;">
             <h2 class="step-title">You're all set!</h2>
             <p class="step-body">TaskWise is ready to help you turn messages, reminders, and everyday responsibilities into clear next steps.</p>
             <p class="muted">You can always review and edit the result before saving.</p>
@@ -842,6 +833,14 @@
               <button id="addManualTaskBtn" class="secondary-btn" type="button">Add manually</button>
               <button id="loadExampleBtn" class="ghost-btn" type="button">Load example</button>
             </div>
+
+            <!-- AI context preview -->
+            <details id="aiContextPreview" class="ai-context-details">
+              <summary class="ai-context-summary">
+                <span id="aiContextSummaryText">What the AI knows about you</span>
+              </summary>
+              <div id="aiContextBody" class="ai-context-body"></div>
+            </details>
 
             <!-- Loading state -->
             <div id="loadingState" class="loading-state hidden">

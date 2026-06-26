@@ -109,6 +109,7 @@ export function updateContextStatus() {
   if (!profile) {
     els.contextStatus.textContent = "No context yet";
     els.contextStatus.classList.add("warning");
+    updateAiContextPreview(null);
     return;
   }
   const signals = [
@@ -118,6 +119,87 @@ export function updateContextStatus() {
   ].filter(Boolean);
   els.contextStatus.textContent = `${signals.length} context signals`;
   els.contextStatus.classList.add("good");
+  updateAiContextPreview(profile);
+}
+
+function updateAiContextPreview(profile) {
+  const summaryEl = document.getElementById("aiContextSummaryText");
+  const bodyEl = document.getElementById("aiContextBody");
+  if (!summaryEl || !bodyEl) return;
+
+  if (!profile) {
+    summaryEl.textContent = "What the AI knows about you — no context yet";
+    bodyEl.textContent = "Complete onboarding so the AI can use your profile to classify tasks correctly.";
+    return;
+  }
+
+  const ctx = buildRelevantContextLocal(profile);
+  const lines = serializeContextLocal(ctx);
+
+  const count = lines.length;
+  summaryEl.textContent = `What the AI knows about you (${count} signal${count !== 1 ? "s" : ""})`;
+  bodyEl.innerHTML = lines.length
+    ? lines.map(l => `<div class="ai-ctx-line">${escHtml(l)}</div>`).join("")
+    : `<span class="muted">No context signals yet — complete your profile for better results.</span>`;
+}
+
+function buildRelevantContextLocal(profile) {
+  if (!profile) return {};
+  const ctx = {};
+  if (profile.lifeAreas?.length) ctx.lifeAreas = profile.lifeAreas;
+  const wc = profile.workContext;
+  if (wc && profile.lifeAreas?.includes("Work")) {
+    const w = {};
+    const industry = _eff(wc.industry, wc.industryCustom);
+    const role = _eff(wc.role, wc.roleCustom);
+    const workplace = _eff(wc.workplace, wc.workplaceCustom);
+    if (industry) w.industry = industry;
+    if (role) w.role = role;
+    if (workplace) w.workplace = workplace;
+    const projects = wc.projectsOrPeople?.length
+      ? wc.projectsOrPeople
+      : [wc.commonProjects, wc.knownPeople].filter(Boolean).join(", ").split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+    if (projects.length) w.projectsOrPeople = projects.slice(0, 10);
+    if (Object.keys(w).length) ctx.work = w;
+  }
+  const sc = profile.studyContext;
+  if (sc && profile.lifeAreas?.includes("Studies")) {
+    const s = {};
+    const institution = _eff(sc.institution, sc.institutionCustom);
+    const degree = _eff(sc.degreeLevel, sc.degreeLevelCustom) || sc.studyType;
+    const field = _eff(sc.fieldOfStudy || sc.field, sc.fieldOfStudyCustom);
+    if (institution) s.institution = institution;
+    if (degree) s.degreeLevel = degree;
+    if (field) s.fieldOfStudy = field;
+    const courses = sc.coursesOrPeople?.length ? sc.coursesOrPeople : (sc.commonProjects || "").split(/[,;]+/).map(x => x.trim()).filter(Boolean);
+    if (courses.length) s.coursesOrPeople = courses.slice(0, 5);
+    if (Object.keys(s).length) ctx.studies = s;
+  }
+  return ctx;
+}
+
+function serializeContextLocal(ctx) {
+  const lines = [];
+  if (ctx.lifeAreas?.length) lines.push(`Life areas: ${ctx.lifeAreas.join(", ")}`);
+  if (ctx.work) {
+    const w = ctx.work;
+    if (w.industry) lines.push(`Work industry: ${w.industry}`);
+    if (w.role) lines.push(`Work role: ${w.role}`);
+    if (w.workplace) lines.push(`Workplace: ${w.workplace}`);
+    if (w.projectsOrPeople?.length) lines.push(`Work projects/people: ${w.projectsOrPeople.join(", ")}`);
+  }
+  if (ctx.studies) {
+    const s = ctx.studies;
+    if (s.institution) lines.push(`Institution: ${s.institution}`);
+    if (s.degreeLevel) lines.push(`Degree level: ${s.degreeLevel}`);
+    if (s.fieldOfStudy) lines.push(`Field of study: ${s.fieldOfStudy}`);
+    if (s.coursesOrPeople?.length) lines.push(`Courses/people: ${s.coursesOrPeople.join(", ")}`);
+  }
+  return lines;
+}
+
+function _eff(primary, custom) {
+  return (!primary || primary === "Other") ? (custom || null) : primary;
 }
 
 // ── Title validation ──────────────────────────────────────────────────
@@ -226,6 +308,27 @@ function fillPreview(task, badgeLabel) {
     els.previewCategoryPrompt.querySelectorAll("button[data-cat]").forEach(b => {
       b.classList.toggle("selected", b.dataset.cat === (task.category || ""));
     });
+
+    // Show a hint only when the AI is uncertain about the category
+    let catHint = els.previewCategoryPrompt.querySelector(".cat-confidence-hint");
+    const conf = task.aiGenerated ? (task.categoryConfidence || 0) : 1;
+    const uncertain = task.aiGenerated && (!task.category || conf < 0.85);
+    if (uncertain) {
+      if (!catHint) {
+        catHint = document.createElement("p");
+        catHint.className = "cat-confidence-hint";
+        els.previewCategoryPrompt.appendChild(catHint);
+      }
+      if (!task.category) {
+        catHint.textContent = "Couldn't determine category — please pick one.";
+        catHint.classList.add("cat-hint-required");
+      } else {
+        catHint.textContent = `Not sure about "${task.category}" — correct if needed.`;
+        catHint.classList.remove("cat-hint-required");
+      }
+    } else if (catHint) {
+      catHint.remove();
+    }
   }
 
   els.previewDueDate.value = task.dueDate || "";
