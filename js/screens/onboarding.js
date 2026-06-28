@@ -347,27 +347,12 @@ function collectTaskTypesData() {
 function validateContextOther() {
   const err = el("obContextError");
 
-  const datalistPairs = [
+  const selectPairs = [
     ["ctxWorkIndustry", "ctxWorkIndustryCustom"],
     ["ctxWorkRole", "ctxWorkRoleCustom"],
     ["ctxWorkplace", "ctxWorkplaceCustom"],
     ["ctxStudyInstitution", "ctxStudyInstitutionCustom"],
-    ["ctxStudyField", "ctxStudyFieldCustom"]
-  ];
-  for (const [inputId, customId] of datalistPairs) {
-    const input = el(inputId);
-    if (input?.value.trim() === "Other") {
-      const custom = el(customId);
-      if (!custom?.value.trim()) {
-        err?.classList.remove("hidden");
-        openAccordionSection(custom?.closest(".context-section"));
-        custom?.focus();
-        return false;
-      }
-    }
-  }
-
-  const selectPairs = [
+    ["ctxStudyField", "ctxStudyFieldCustom"],
     ["ctxStudyInstType", "ctxStudyInstTypeCustom"],
     ["ctxStudyDegree", "ctxStudyDegreeCustom"]
   ];
@@ -691,14 +676,12 @@ export function initOnboardingScreen(options = {}) {
   // Task types chip group — has an "Other" chip
   initChipGroup("taskTypesChips", "taskTypesOtherWrap", "taskTypesOther");
 
-  // Wire datalist "Other" detection
-  wireOtherInput("ctxWorkIndustry", "ctxWorkIndustryCustomWrap", "ctxWorkIndustryCustom");
-  wireOtherInput("ctxWorkRole", "ctxWorkRoleCustomWrap", "ctxWorkRoleCustom");
-  wireOtherInput("ctxWorkplace", "ctxWorkplaceCustomWrap", "ctxWorkplaceCustom");
-  wireOtherInput("ctxStudyInstitution", "ctxStudyInstitutionCustomWrap", "ctxStudyInstitutionCustom");
-  wireOtherInput("ctxStudyField", "ctxStudyFieldCustomWrap", "ctxStudyFieldCustom");
-
   // Wire select "Other" detection
+  wireOtherSelect("ctxWorkIndustry", "ctxWorkIndustryCustomWrap", "ctxWorkIndustryCustom");
+  wireOtherSelect("ctxWorkRole", "ctxWorkRoleCustomWrap", "ctxWorkRoleCustom");
+  wireOtherSelect("ctxWorkplace", "ctxWorkplaceCustomWrap", "ctxWorkplaceCustom");
+  wireOtherSelect("ctxStudyInstitution", "ctxStudyInstitutionCustomWrap", "ctxStudyInstitutionCustom");
+  wireOtherSelect("ctxStudyField", "ctxStudyFieldCustomWrap", "ctxStudyFieldCustom");
   wireOtherSelect("ctxStudyInstType", "ctxStudyInstTypeCustomWrap", "ctxStudyInstTypeCustom");
   wireOtherSelect("ctxStudyDegree", "ctxStudyDegreeCustomWrap", "ctxStudyDegreeCustom");
 
